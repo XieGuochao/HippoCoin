@@ -54,7 +54,7 @@ func (host *HippoHost) New() {
 	host.transactionPool = new(HippoTransactionPool)
 	host.miningQueue = new(MiningQueue)
 	host.miningQueue.New(host.ctx, host.miningCallbackFunc, host.hashFunc,
-		host.miningFunction, 1)
+		host.miningFunction)
 
 	host.mining = new(HippoMining)
 	host.mining.New(host.miningQueue, host.transactionPool, 1000,

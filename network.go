@@ -174,8 +174,8 @@ func (c *HippoNetworkClient) Ping(address string) (int64, bool) {
 	logger.Debug("ping", address)
 	err := p2pClient.New(c.ctx, c.protocol, address)
 	if err != nil {
-		logger.Debug("??")
 		logger.Error(err)
+		c.neighbors.Delete(address)
 		return 0, false
 	}
 	defer p2pClient.Close()

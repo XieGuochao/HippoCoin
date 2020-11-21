@@ -12,7 +12,8 @@ func TestMiningOK(t *testing.T) {
 	logger.Info("test mining ===============================================")
 	balance := new(HippoBalance)
 	// block
-	block := new(HippoBlock)
+	var block Block
+	block = new(HippoBlock)
 	block.New([]byte{}, 233, testHashfunction, 0, balance, testCurve)
 
 	// mining
@@ -26,13 +27,13 @@ func TestMiningOK(t *testing.T) {
 
 	miningQueue := new(MiningQueue)
 	// logger.Debug("hash function:", &testHashfunction)
-	miningQueue.New(ctx, func(has bool, block HippoBlock) {
+	miningQueue.New(ctx, func(has bool, block Block, storage Storage, bq BroadcastQueue) {
 		logger.Info("has:", has)
 		logger.Info("mine a block:", block)
 		logger.Info("mine check:", block.CheckNonce(), block.Check())
 		logger.Debug("invoke stop")
 		mining.Stop()
-	}, testHashfunction, testMiningFunction, 1)
+	}, testHashfunction, testMiningFunction)
 
 	wg.Add(1)
 	miningQueue.Run(&wg)
@@ -43,7 +44,7 @@ func TestMiningOK(t *testing.T) {
 
 	block = mining.Fetch(block)
 	mining.Sign(block)
-	mining.Mine(*block)
+	mining.Mine(block)
 
 	wg.Wait()
 }
@@ -53,7 +54,8 @@ func TestMiningStop(t *testing.T) {
 	logger.Info("test mining ===============================================")
 	balance := new(HippoBalance)
 	// block
-	block := new(HippoBlock)
+	var block Block
+	block = new(HippoBlock)
 	block.New([]byte{}, 220, testHashfunction, 0, balance, testCurve)
 
 	// mining
@@ -67,13 +69,7 @@ func TestMiningStop(t *testing.T) {
 
 	miningQueue := new(MiningQueue)
 	// logger.Debug("hash function:", &testHashfunction)
-	miningQueue.New(ctx, func(has bool, block HippoBlock) {
-		logger.Info("has:", has)
-		logger.Info("mine a block:", block)
-		if has {
-			logger.Info("mine check:", block.CheckNonce(), block.Check())
-		}
-	}, testHashfunction, testMiningFunction, 1)
+	miningQueue.New(ctx, miningCallbackLog, testHashfunction, testMiningFunction)
 
 	wg.Add(1)
 	miningQueue.Run(&wg)
@@ -84,7 +80,7 @@ func TestMiningStop(t *testing.T) {
 
 	block = mining.Fetch(block)
 	mining.Sign(block)
-	mining.Mine(*block)
+	mining.Mine(block)
 
 	go func() {
 		time.Sleep(time.Second * time.Duration(10))
@@ -100,7 +96,8 @@ func TestMiningMultipleOK(t *testing.T) {
 	logger.Info("test mining ===============================================")
 	balance := new(HippoBalance)
 	// block
-	block := new(HippoBlock)
+	var block Block
+	block = new(HippoBlock)
 	block.New([]byte{}, 233, testHashfunction, 0, balance, testCurve)
 
 	// mining
@@ -115,13 +112,10 @@ func TestMiningMultipleOK(t *testing.T) {
 
 	miningQueue := new(MiningQueue)
 	// logger.Debug("hash function:", &testHashfunction)
-	miningQueue.New(ctx, func(has bool, block HippoBlock) {
-		logger.Info("has:", has)
-		logger.Info("mine a block:", block)
-		logger.Info("mine check:", block.CheckNonce(), block.Check())
-		logger.Debug("invoke stop")
+	miningQueue.New(ctx, func(has bool, block Block, storage Storage, bq BroadcastQueue) {
+		miningCallbackLog(has, block, storage, bq)
 		mining.Stop()
-	}, testHashfunction, testMiningFunction, 1)
+	}, testHashfunction, testMiningFunction)
 
 	wg.Add(1)
 	miningQueue.Run(&wg)
@@ -139,6 +133,6 @@ func TestMiningMultipleOK(t *testing.T) {
 		mining.Stop()
 	}()
 
-	mining.Mine(*block)
+	mining.Mine(block)
 	wg.Wait()
 }

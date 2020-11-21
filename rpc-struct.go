@@ -60,15 +60,22 @@ func (r QueryResponse) GetLevel() uint { return 0 }
 
 // BroadcastBlock ...
 type BroadcastBlock struct {
-	Block     Block
-	Level     uint
-	Addresses map[string]bool
+	Block        Block
+	Transactions []Transaction
+	Level        uint
+	Addresses    map[string]bool
 }
 
 // Encode ...
 func (b *BroadcastBlock) Encode() []byte {
-	var bytes []byte
-	bytes, _ = json.Marshal(*b)
+	var (
+		bytes []byte
+		err   error
+	)
+	b.Transactions = b.Block.GetTransactions()
+	b.Block.SetTransactions([]Transaction{})
+	bytes, err = json.Marshal(b)
+	logger.Debug("encode:", string(bytes), err)
 	return bytes
 }
 
@@ -82,30 +89,56 @@ func (b *BroadcastBlock) SetLevel(l uint) { b.Level = l }
 
 // ReceiveBlock ...
 type ReceiveBlock struct {
-	Data           []byte
-	broadcastBlock *BroadcastBlock
+	Data      []byte
+	block     *HippoBlock
+	addresses map[string]bool
+	level     uint
 }
 
 // Decode ...
 func (r *ReceiveBlock) Decode(b *BroadcastBlock) {
-	if r.broadcastBlock == nil {
-		json.Unmarshal(r.Data, r.broadcastBlock)
+	logger.Debug("decode:", string(r.Data))
+	var (
+		dataMap map[string]interface{}
+	)
+	if r.block == nil {
+		r.block = new(HippoBlock)
+		err := json.Unmarshal(r.Data, &dataMap)
+		if err != nil {
+			return
+		}
+		bytes, err := json.Marshal(dataMap["Block"])
+
+		err = json.Unmarshal(bytes, r.block)
+
+		var trs []HippoTransaction
+		bytes, err = json.Marshal(dataMap["Transactions"])
+
+		json.Unmarshal(bytes, &trs)
+		r.block.transactions = make([]Transaction, len(trs))
+		for i, tr := range trs {
+			r.block.transactions[i] = &tr
+		}
+
+		bytes, err = json.Marshal(dataMap["Addresses"])
+		json.Unmarshal(bytes, &r.addresses)
+
+		bytes, err = json.Marshal(dataMap["Level"])
+		json.Unmarshal(bytes, &r.level)
 	}
-	b = r.broadcastBlock
+	logger.Debug("decode:", r.block)
+	b.Block = r.block
+	b.Transactions = r.block.transactions
+	b.Addresses = r.addresses
+	b.Level = r.level
 }
 
 // GetAddresses ...
 func (r *ReceiveBlock) GetAddresses() map[string]bool {
-	if r.broadcastBlock == nil {
-		json.Unmarshal(r.Data, r.broadcastBlock)
-	}
-	return r.broadcastBlock.Addresses
+	return r.addresses
 }
 
 // GetLevel ...
 func (r *ReceiveBlock) GetLevel() uint {
-	if r.broadcastBlock == nil {
-		json.Unmarshal(r.Data, r.broadcastBlock)
-	}
-	return r.broadcastBlock.Level
+	return r.level
 }

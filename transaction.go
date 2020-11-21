@@ -38,15 +38,15 @@ type Transaction interface {
 
 // HippoTransaction ...
 type HippoTransaction struct {
-	SenderAddresses   []string
-	SenderAmounts     []uint64
-	ReceiverAddresses []string
-	ReceiverAmounts   []uint64
-	Fee               uint64
-	Timestamp         int64
+	SenderAddresses   []string `json:"senderAddresses"`
+	SenderAmounts     []uint64 `json:"senderAmounts"`
+	ReceiverAddresses []string `json:"receiverAddresses"`
+	ReceiverAmounts   []uint64 `json:"receiverAmounts"`
+	Fee               uint64   `json:"fee"`
+	Timestamp         int64    `json:"timestamp"`
 	hashFunction      HashFunction
 
-	SenderSignatures []string
+	SenderSignatures []string `json:"senderSignatures"`
 	curve            elliptic.Curve
 }
 

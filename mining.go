@@ -13,15 +13,19 @@ import (
 // 4. mining.New(q, tp, capacity, TTL, balance, key)
 // 5. block = Fetch(block)
 // 6. block = mining.Sign(block)
-// 7. mining.Mine(*block)
-// 8. mining.Cancel()
-// 9. mining.Stop()
+// 7. mining.Mine(block)
+// 8. mining.Broadcast(block)
+// 9. mining.Cancel()
+// 10. mining.Stop()
 type Mining interface {
 	New(q *MiningQueue, tp TransactionPool, capacity int,
 		TTL int64, balance Balance, key Key)
-	Fetch(b *HippoBlock) *HippoBlock
-	Sign(b *HippoBlock)
-	MineBroadcast()
+	SetStorage(storage Storage)
+	SetBroadcastQueue(bq BroadcastQueue)
+	Fetch(b Block) Block
+	Sign(b Block)
+	Mine(b Block)
+	Broadcast(b Block)
 	Stop()
 }
 
@@ -30,6 +34,8 @@ type Mining interface {
 type HippoMining struct {
 	queue           *MiningQueue
 	transactionPool TransactionPool
+	storage         Storage
+	broadcastQueue  BroadcastQueue
 
 	minedHash     sync.Map
 	blockCapacity int
@@ -51,9 +57,15 @@ func (m *HippoMining) New(q *MiningQueue, tp TransactionPool, capacity int,
 	m.key = key
 }
 
+// SetStorage ...
+func (m *HippoMining) SetStorage(storage Storage) { m.storage = storage }
+
+// SetBroadcastQueue ...
+func (m *HippoMining) SetBroadcastQueue(bq BroadcastQueue) { m.broadcastQueue = bq }
+
 // Fetch ...
 // Fetch transactions into a block.
-func (m *HippoMining) Fetch(b *HippoBlock) *HippoBlock {
+func (m *HippoMining) Fetch(b Block) Block {
 	currentTime := time.Now().Unix()
 	transactions := m.transactionPool.Fetch(m.blockCapacity, func(t Transaction) bool {
 		if t.GetTimestamp()+m.TTL > currentTime {
@@ -64,24 +76,27 @@ func (m *HippoMining) Fetch(b *HippoBlock) *HippoBlock {
 		}
 		return true
 	})
-	b.Transactions = transactions
+	b.SetTransactions(transactions)
 	return b
 }
 
 // Sign ...
 // Sign a block after fetching.
-func (m *HippoMining) Sign(b *HippoBlock) {
+func (m *HippoMining) Sign(b Block) {
 	b.Sign(m.key)
 }
 
 // Mine ...
-func (m *HippoMining) Mine(b HippoBlock) {
-	m.queue.add(b)
+func (m *HippoMining) Mine(b Block) {
+	b0, ok := b.(*HippoBlock)
+	if ok {
+		m.queue.add(*b0)
+	}
 }
 
-// MineBroadcast ...
-func (m *HippoMining) MineBroadcast() {
-
+// Broadcast ...
+func (m *HippoMining) Broadcast(b Block) {
+	miningCallbackBroadcastSave(b != nil, b, m.storage, m.broadcastQueue)
 }
 
 // Cancel ...

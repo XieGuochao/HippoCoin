@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/elliptic"
+	"sync"
 
 	registerlib "github.com/XieGuochao/HippoCoinRegister/lib"
 )
@@ -29,6 +30,15 @@ var (
 
 	testRegisterAddress  string
 	testRegisterProtocol string
+
+	testWaitGroup sync.WaitGroup
+
+	testBalance         Balance
+	testMining          Mining
+	testMiningQueue     MiningQueue
+	testTransactionPool TransactionPool
+	testStorage         Storage
+	testBroadcastQueue  BroadcastQueue
 )
 
 func initKeys(number int) {

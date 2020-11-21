@@ -14,7 +14,7 @@ import (
 // 4. SetNonce(nonce)
 type Block interface {
 	New(previousHash []byte, numBytes uint, hashFunction HashFunction,
-		Level int, balance *Balance, curve elliptic.Curve)
+		Level int, balance Balance, curve elliptic.Curve)
 	Digest() string
 	DigestSignature() string
 	HashBytes() []byte
@@ -24,28 +24,30 @@ type Block interface {
 	ParentHashBytes() []byte
 	ParentHash() string
 	SetTransactions(tr []Transaction)
+	GetTransactions() (tr []Transaction)
 	Sign(key Key)
 	SetNonce(nonce uint32)
 	Signature() string
 	CheckSignature() bool
 	CheckTransactions() bool
+	CheckNonce() bool
 	Check() bool
 	GetLevel() int
 }
 
 // HippoBlock ...
 type HippoBlock struct {
-	Transactions []Transaction
-	PreviousHash []byte
-	NumBytes     uint
-	Nonce        uint32
+	transactions []Transaction
+	PreviousHash []byte `json:"previousHash"`
+	NumBytes     uint   `json:"numBytes"`
+	Nonce        uint32 `json:"nonce"`
 	hashFunction HashFunction
-	Level        int
-	Timestamp    int64
+	Level        int   `json:"level"`
+	Timestamp    int64 `json:"timestamp"`
 
 	// miner
-	MinerAddress   string
-	MinerSignature string
+	MinerAddress   string `json:"minerAddress"`
+	MinerSignature string `json:"minerSignature"`
 
 	balance Balance
 
@@ -64,7 +66,7 @@ func (b *HippoBlock) New(previousHash []byte, numBytes uint,
 func (b *HippoBlock) Digest() string {
 	d := ""
 	d += fmt.Sprintf("%d|%d|", b.Timestamp, b.Level)
-	for _, t := range b.Transactions {
+	for _, t := range b.transactions {
 		d += "|" + t.Hash()
 	}
 	d += "|"
@@ -106,7 +108,12 @@ func (b *HippoBlock) ParentHash() string {
 
 // SetTransactions ...
 func (b *HippoBlock) SetTransactions(tr []Transaction) {
-	b.Transactions = tr
+	b.transactions = tr
+}
+
+// GetTransactions ...
+func (b *HippoBlock) GetTransactions() (tr []Transaction) {
+	return b.transactions
 }
 
 // SetNonce ...
@@ -149,7 +156,7 @@ func (b *HippoBlock) CheckSignature() bool {
 
 // CheckTransactions ...
 func (b *HippoBlock) CheckTransactions() bool {
-	for _, t := range b.Transactions {
+	for _, t := range b.transactions {
 		if !t.Check(b.balance) {
 			return false
 		}

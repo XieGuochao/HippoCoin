@@ -55,12 +55,10 @@ func (s *P2PServer) serve() {
 				logger.Info("p2p server close.")
 				return
 			default:
-				logger.Debug("p2p serving", s.listener)
 				conn, err := s.listener.Accept()
 				if err != nil {
 					logger.Error("p2p server accept error:", err)
 				} else {
-					logger.Debug("p2p receive", conn)
 					go rpc.ServeConn(conn)
 				}
 			}
@@ -96,7 +94,9 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 		broadcastBlock BroadcastBlock
 		block          Block
 	)
+	logger.Debug("receive bytes:", sendBlockByte)
 	receiveBlock.Decode(&broadcastBlock)
+	logger.Debug("receive block:", broadcastBlock)
 	block = broadcastBlock.Block
 
 	// Check block

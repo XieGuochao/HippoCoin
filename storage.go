@@ -12,11 +12,11 @@ type Storage interface {
 	CheckVerified(hashkey string) bool
 	UpdateVerified(hashkey string)
 	Get(hashKey string) (Block, bool)
-	GetOneFromLevel(levelNum int) *Block
+	GetOneFromLevel(levelNum int) Block
 	UpdateChild(hashKey string)
 	MaxLevel() int
 	TryUpdateMaxLevel(level int) int
-	GetTopBlock() (Block, bool)
+	GetTopBlock() Block
 	GetBlocksLevel(level0, level1 int) []Block
 }
 

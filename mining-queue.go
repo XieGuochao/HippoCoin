@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type miningCallback func(has bool, block HippoBlock)
+type miningCallback func(has bool, block Block, storage Storage, bq BroadcastQueue)
 
 // MiningQueue ...
 // Steps:
@@ -30,18 +30,30 @@ type MiningQueue struct {
 	queueContext  context.Context
 	queueCancel   context.CancelFunc
 	parentContext context.Context
+
+	storage        Storage
+	broadcastQueue BroadcastQueue
 }
 
 // New ...
 func (m *MiningQueue) New(parentContext context.Context, callback miningCallback,
-	hashFunction HashFunction, miningFunc MiningFunction, threads int) {
+	hashFunction HashFunction, miningFunc MiningFunction) {
 	m.setCallback(callback)
 	m.setMiningFunc(miningFunc)
 	m.channel = make(chan HippoBlock, 30)
-	m.threads = threads
 	m.hashFunction = hashFunction
 	m.parentContext = parentContext
 	m.context, m.cancel = context.WithCancel(parentContext)
+}
+
+// SetBroadcastQueue ...
+func (m *MiningQueue) SetBroadcastQueue(bq BroadcastQueue) {
+	m.broadcastQueue = bq
+}
+
+// SetStorage ...
+func (m *MiningQueue) SetStorage(storage Storage) {
+	m.storage = storage
 }
 
 // Run ...
@@ -69,7 +81,7 @@ func (m *MiningQueue) main() {
 			if result {
 				logger.Info("mining result:", newBlock.Hash())
 			}
-			m.callback(result, newBlock)
+			m.callback(result, &newBlock, m.storage, m.broadcastQueue)
 		case <-m.queueContext.Done():
 			logger.Debug("mining queue closed.")
 			return
@@ -104,4 +116,46 @@ func (m *MiningQueue) Cancel() {
 func (m *MiningQueue) Close() {
 	logger.Debug("mining queue Close()")
 	m.queueCancel()
+}
+
+func miningCallbackLog(has bool, block Block, storage Storage, bq BroadcastQueue) {
+	logger.Info("has:", has)
+	if has {
+		logger.Info("mine a block:", block)
+		logger.Info("mine check:", block.CheckNonce(), block.Check())
+	}
+}
+
+func miningCallbackBroadcastSave(has bool, block Block, storage Storage, bq BroadcastQueue) {
+	if has {
+		logger.Info("mine a block:", block, block.Check())
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			if storage != nil {
+				storage.Add(block)
+			} else {
+				logger.Error("empty storage")
+			}
+			wg.Done()
+		}()
+
+		go func() {
+			if bq != nil {
+				broadcastBlock := BroadcastBlock{
+					Block:     block,
+					Level:     0,
+					Addresses: make(map[string]bool),
+				}
+				bq.Add(broadcastBlock)
+			} else {
+				logger.Error("empty broadcast queue")
+			}
+			wg.Done()
+		}()
+
+		wg.Wait()
+		logger.Infof("broadcast save block %s done.", block.Hash())
+	}
 }

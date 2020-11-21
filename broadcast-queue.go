@@ -11,7 +11,7 @@ type BroadcastQueue interface {
 	Add(b BroadcastBlock)
 	Run()
 	Stop()
-	BroadcastBlockSend(block BroadcastBlock)
+	// BroadcastBlockSend(block BroadcastBlock)
 }
 
 // HippoBroadcastQueue ...
@@ -28,7 +28,7 @@ type HippoBroadcastQueue struct {
 func (bq *HippoBroadcastQueue) New(ctx context.Context, protocol string,
 	networkClient *NetworkClient, p2pClient P2PClientInterface) {
 	bq.ctx, bq.cancel = context.WithCancel(ctx)
-	bq.channel = make(chan BroadcastBlock)
+	bq.channel = make(chan BroadcastBlock, 10)
 	bq.protocol = protocol
 	bq.networkClient = networkClient
 	bq.p2pClient = p2pClient
@@ -42,15 +42,19 @@ func (bq *HippoBroadcastQueue) Add(b BroadcastBlock) {
 
 // Run ...
 func (bq *HippoBroadcastQueue) Run() {
-	for {
-		select {
-		case <-bq.ctx.Done():
-			logger.Info("broadcast queue closed.")
-			return
-		case block := <-bq.channel:
-			bq.BroadcastBlockSend(block)
+	go func() {
+		for {
+			select {
+			case <-bq.ctx.Done():
+				logger.Info("broadcast queue closed.")
+				return
+			case block := <-bq.channel:
+				logger.Debug("receive broadcast block")
+
+				bq.broadcastBlockSend(block)
+			}
 		}
-	}
+	}()
 }
 
 // Stop ...
@@ -58,8 +62,8 @@ func (bq *HippoBroadcastQueue) Stop() {
 	bq.cancel()
 }
 
-// BroadcastBlockSend ...
-func (bq *HippoBroadcastQueue) BroadcastBlockSend(block BroadcastBlock) {
+func (bq *HippoBroadcastQueue) broadcastBlockSend(block BroadcastBlock) {
+	logger.Debug("receive broadcast block")
 	addresses := (*bq.networkClient).GetNeighbors()
 	for _, address := range addresses {
 		block.Addresses[address] = true
