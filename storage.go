@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
 )
@@ -18,6 +19,14 @@ type Storage interface {
 	TryUpdateMaxLevel(level int) int
 	GetTopBlock() Block
 	GetBlocksLevel(level0, level1 int) []Block
+
+	Count() int
+	AllHashes() []string
+	AllHashesInLevel() map[int][]string
+
+	SetMiningCancel(cancelFunc context.CancelFunc)
+	CheckMiningCancel(level int) bool
+	SetBalance(Balance)
 }
 
 // HippoStorage ...
@@ -38,6 +47,12 @@ type HippoStorage struct {
 
 	// verified
 	verified sync.Map
+
+	// mining
+	miningCancel context.CancelFunc
+
+	// balance
+	balance Balance
 }
 
 // New ...
@@ -71,22 +86,48 @@ func (storage *HippoStorage) UnlockLevel() {
 
 // ============================================
 
+// SetBalance ...
+func (storage *HippoStorage) SetBalance(balance Balance) { storage.balance = balance }
+
 // Add ...
 func (storage *HippoStorage) Add(block Block) bool {
 	if !block.Check() {
+		logger.Error("block check failed:", block.Hash())
 		return false
 	}
+
+	logger.Info("storage add:", block.Hash())
 
 	storage.LockBlock()
 	h := block.Hash()
 
 	parentHash := block.ParentHash()
 	if _, has := storage.blocks[h]; has {
+		// We have stored this block
 		storage.UnlockBlock()
 		return true
 	}
+	// A new block
 	storage.blocks[h] = block
 	storage.UnlockBlock()
+
+	if storage.miningCancel != nil && storage.CheckMiningCancel(block.GetLevel()) {
+		logger.Info("cancel mining and mine the new")
+		storage.miningCancel()
+		storage.miningCancel = nil
+	}
+
+	// Update balance
+	balance := storage.balance
+	if balance != nil {
+		balanceChange := block.GetBalanceChange()
+		logger.Debug("storage add balance change:", balanceChange)
+		for address, value := range balanceChange {
+			balance.Update(address, value)
+		}
+	} else {
+		logger.Error("storage: no balance")
+	}
 
 	storage.LockLevel()
 	l, has := storage.levels[block.GetLevel()]
@@ -114,6 +155,17 @@ func (storage *HippoStorage) Add(block Block) bool {
 	}
 
 	return false
+}
+
+// SetMiningCancel ...
+func (storage *HippoStorage) SetMiningCancel(cancelFunc context.CancelFunc) {
+	storage.miningCancel = cancelFunc
+}
+
+// CheckMiningCancel ...
+func (storage *HippoStorage) CheckMiningCancel(level int) bool {
+	currentTopLevel := storage.MaxLevel()
+	return level > currentTopLevel
 }
 
 // CheckVerified ...
@@ -228,6 +280,40 @@ func (storage *HippoStorage) GetBlocksLevel(level0, level1 int) (blocks []Block)
 		}
 	}
 	return
+}
+
+// Count ...
+func (storage *HippoStorage) Count() int {
+	storage.LockBlock()
+	defer storage.UnlockBlock()
+	return len(storage.blocks)
+}
+
+// AllHashes ...
+func (storage *HippoStorage) AllHashes() []string {
+	storage.LockBlock()
+	defer storage.UnlockBlock()
+	hashes := make([]string, len(storage.blocks))
+	i := 0
+	for h := range storage.blocks {
+		hashes[i] = h
+		i++
+	}
+	return hashes
+}
+
+// AllHashesInLevel ...
+func (storage *HippoStorage) AllHashesInLevel() map[int][]string {
+	storage.LockLevel()
+	defer storage.UnlockLevel()
+	newMap := make(map[int][]string)
+	for k, v := range storage.levels {
+		newMap[k] = make([]string, 0)
+		for b := range v {
+			newMap[k] = append(newMap[k], b.Hash())
+		}
+	}
+	return newMap
 }
 
 // EncodeBlocks ...

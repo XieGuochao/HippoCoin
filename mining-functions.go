@@ -10,22 +10,20 @@ import (
 
 // MiningFunction ...
 type MiningFunction interface {
-	New(ctx context.Context, hashFunction HashFunction, threads int)
-	Solve(block HippoBlock) (result bool, newBlock HippoBlock)
+	New(hashFunction HashFunction, threads int)
+	Solve(ctx context.Context, block HippoBlock) (result bool, newBlock HippoBlock)
 }
 
 // single mining
 type singleMiningFunction struct {
-	ctx context.Context
 	// block        HippoBlock
 	hashFunction HashFunction
 	callback     miningCallback
 	seed         int64
 }
 
-func (m *singleMiningFunction) New(ctx context.Context,
-	hashFunction HashFunction, threads int) {
-	m.ctx, m.hashFunction = ctx, hashFunction
+func (m *singleMiningFunction) New(hashFunction HashFunction, threads int) {
+	m.hashFunction = hashFunction
 	logger.Debug("use single mining")
 }
 
@@ -33,9 +31,10 @@ func (m *singleMiningFunction) SetSeed(seed int64) {
 	m.seed = seed
 }
 
-func (m *singleMiningFunction) Solve(block HippoBlock) (result bool, newBlock HippoBlock) {
-	found, nonce := mineBase(m.ctx, block.HashSignatureBytes(), block.NumBytes,
-		m.hashFunction, m.seed, 0)
+func (m *singleMiningFunction) Solve(ctx context.Context,
+	block HippoBlock) (result bool, newBlock HippoBlock) {
+	found, nonce := mineBase(ctx, block.HashSignatureBytes(), block.NumBytes,
+		m.hashFunction, block.Level, m.seed, 0)
 	if found {
 		block.Nonce = nonce
 		return true, block
@@ -45,15 +44,13 @@ func (m *singleMiningFunction) Solve(block HippoBlock) (result bool, newBlock Hi
 
 // multiple mining
 type multipleMiningFunction struct {
-	ctx          context.Context
 	hashFunction HashFunction
 	threads      int
 	seed         int64
 }
 
-func (m *multipleMiningFunction) New(ctx context.Context,
-	hashFunction HashFunction, threads int) {
-	m.ctx, m.hashFunction, m.threads = ctx, hashFunction, threads
+func (m *multipleMiningFunction) New(hashFunction HashFunction, threads int) {
+	m.hashFunction, m.threads = hashFunction, threads
 	logger.Debug("use multiple mining:", threads)
 }
 
@@ -65,19 +62,19 @@ func (m *multipleMiningFunction) SetSeed(seed int64) {
 	m.seed = seed
 }
 
-func (m *multipleMiningFunction) Solve(block HippoBlock) (result bool, newBlock HippoBlock) {
+func (m *multipleMiningFunction) Solve(ctx context.Context, block HippoBlock) (result bool, newBlock HippoBlock) {
 	wg := new(sync.WaitGroup)
 	wg.Add(m.threads)
 	var once sync.Once
 	var totalNonce uint32
 
-	miningContext, miningCancel := context.WithCancel(m.ctx)
+	miningContext, miningCancel := context.WithCancel(ctx)
 	defer miningCancel()
 	for i := 0; i < m.threads; i++ {
 		go func(ctx context.Context, cancel context.CancelFunc, i int) {
 			logger.Debug("start thread:", i)
 			found, nonce := mineBase(ctx, block.HashSignatureBytes(), block.NumBytes,
-				m.hashFunction, (m.seed+int64(i))%math.MaxInt64, i)
+				m.hashFunction, block.Level, (m.seed+int64(i))%math.MaxInt64, i)
 			if found {
 				once.Do(func() {
 					totalNonce = nonce
@@ -118,7 +115,7 @@ func checkNonce(previousHash []byte, nonce uint32, numBytes uint, hash HashFunct
 }
 
 func mineBase(ctx context.Context, baseHash []byte, numBytes uint,
-	hashFunction HashFunction, seed int64, threadID int) (found bool, nonce uint32) {
+	hashFunction HashFunction, level int, seed int64, threadID int) (found bool, nonce uint32) {
 	logger.Debug("mineBase numBytes:", numBytes)
 	logger.Debug("baseHash:", ByteToHexString(baseHash))
 	rand.Seed(seed)
@@ -139,8 +136,9 @@ func mineBase(ctx context.Context, baseHash []byte, numBytes uint,
 				}
 			}
 			count++
-			if count%1000 == 0 {
-				logger.Infof("[%d] current progress: %d * 10^6", threadID, count/1000)
+			if count%5000 == 0 {
+				logger.Infof("[%d] current progress [%d %d]: %d * 10^6", threadID,
+					numBytes, level, count/1000)
 			}
 		}
 	}

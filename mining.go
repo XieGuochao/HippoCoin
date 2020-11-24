@@ -11,6 +11,7 @@ import (
 // 2. Initialize transactionPool
 // 3. Prepare balance
 // 4. mining.New(q, tp, capacity, TTL, balance, key)
+// mining.WatchSendNewBlock()
 // 5. block = Fetch(block)
 // 6. block = mining.Sign(block)
 // 7. mining.Mine(block)
@@ -27,6 +28,8 @@ type Mining interface {
 	Mine(b Block)
 	Broadcast(b Block)
 	Stop()
+
+	WatchSendNewBlock()
 }
 
 // HippoMining ...
@@ -78,6 +81,47 @@ func (m *HippoMining) Fetch(b Block) Block {
 	})
 	b.SetTransactions(transactions)
 	return b
+}
+
+// WatchSendNewBlock ...
+// Watch and create new block to mine.
+func (m *HippoMining) WatchSendNewBlock() {
+	for {
+		select {
+		case <-m.queue.queueContext.Done():
+			logger.Debug("mining: listen send new block stop.")
+			return
+
+		case <-m.queue.miningStatus:
+			// logger.Info("channel length:", len(m.channel))
+			logger.Error("mining queue chenged")
+
+			if len(m.queue.channel) == 0 {
+				if m.storage == nil {
+					logger.Error("hippo mining: no storage.")
+					continue
+				}
+				if m.transactionPool == nil {
+					logger.Error("hippo mining: no transaction pool.")
+					continue
+				}
+
+				var block Block
+				block = new(HippoBlock)
+				prevBlock := m.storage.GetTopBlock()
+				block.New(prevBlock.HashBytes(), prevBlock.GetNumBytes(), prevBlock.GetHashFunction(),
+					prevBlock.GetLevel()+1, prevBlock.GetBalance(), prevBlock.GetCurve())
+				block = m.Fetch(block)
+
+				block.Sign(testKeys[0])
+				logger.Info("block level:", block.GetLevel())
+				testMining.Mine(block)
+			}
+			// default:
+			// time.Sleep(time.Second)
+		}
+
+	}
 }
 
 // Sign ...

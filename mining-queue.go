@@ -10,6 +10,9 @@ type miningCallback func(has bool, block Block, storage Storage, bq BroadcastQue
 // MiningQueue ...
 // Steps:
 // 1. New(callback, hashFunction,miningFunc, threads)
+// SetBroadcastQueue(bq)
+// SetStorage(storage)
+// SetTransactionPool(tp)
 // 2. Run(wg)
 // 3. Add(block)
 // 4. Cancel() or Close()
@@ -31,8 +34,11 @@ type MiningQueue struct {
 	queueCancel   context.CancelFunc
 	parentContext context.Context
 
-	storage        Storage
-	broadcastQueue BroadcastQueue
+	storage         Storage
+	broadcastQueue  BroadcastQueue
+	transactionPool TransactionPool
+
+	miningStatus chan bool
 }
 
 // New ...
@@ -56,6 +62,11 @@ func (m *MiningQueue) SetStorage(storage Storage) {
 	m.storage = storage
 }
 
+// SetTransactionPool ...
+func (m *MiningQueue) SetTransactionPool(transactionPool TransactionPool) {
+	m.transactionPool = transactionPool
+}
+
 // Run ...
 func (m *MiningQueue) Run(wg *sync.WaitGroup) {
 	m.wg = wg
@@ -65,6 +76,7 @@ func (m *MiningQueue) Run(wg *sync.WaitGroup) {
 
 func (m *MiningQueue) main() {
 	// var block HippoBlock
+	m.miningStatus = make(chan bool, 0)
 	defer logger.Debug("wg done")
 	defer m.wg.Done()
 
@@ -73,21 +85,27 @@ func (m *MiningQueue) main() {
 		case block := <-m.channel:
 			logger.Debug("new block to mining queue:", block.Hash())
 			m.cancel()
-			m.context, m.cancel = context.WithCancel(context.Background())
+			m.context, m.cancel = context.WithCancel(m.queueContext)
+			m.storage.SetMiningCancel(m.cancel)
 
 			// m.miningFunc.New(m.context, m.hashFunction, m.threads)
-			result, newBlock := m.miningFunc.Solve(block)
+			result, newBlock := m.miningFunc.Solve(m.context, block)
 			logger.Info("mining:", result)
 			if result {
 				logger.Info("mining result:", newBlock.Hash())
 			}
 			m.callback(result, &newBlock, m.storage, m.broadcastQueue)
+			logger.Info("mining continue to mine:")
+			m.miningStatus <- true
 		case <-m.queueContext.Done():
 			logger.Debug("mining queue closed.")
 			return
 		}
 	}
 }
+
+// WaitMining ...
+func (m *MiningQueue) WaitMining() { <-m.miningStatus }
 
 func (m *MiningQueue) setHashFunction(f HashFunction) {
 	m.hashFunction = f

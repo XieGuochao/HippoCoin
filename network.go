@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net"
@@ -101,7 +102,11 @@ type NetworkClient interface {
 	GetNeighbors() []string
 	SyncNeighbors()
 	StopSyncNeighbors()
+	GetAddress() string
+
+	TryUpdateNeighbors()
 	Ping(address string) (int64, bool)
+	BroadcastBlock(address string, broadcastBlock BroadcastBlock, reply *string) error
 }
 
 // HippoNetworkClient ...
@@ -117,6 +122,8 @@ type HippoNetworkClient struct {
 	updateTimeRand    int
 	p2pClient         P2PClientInterface
 	maxPing           int64
+
+	networkPool NetworkPool
 }
 
 // New ...
@@ -129,7 +136,9 @@ func (c *HippoNetworkClient) New(ctx context.Context, address string, protocol s
 	c.maxNeighbors = maxNeighbors
 	c.updateTimeBase, c.updateTimeRand = updateTimeBase, updateTimeRand
 	c.p2pClient = p2pClient
-	c.maxPing = 2e3 // 2 seconds
+	c.maxPing = 1e4 // 10 seconds
+
+	c.networkPool.New(c.ctx, c.p2pClient, protocol)
 }
 
 // SetMaxPing ...
@@ -177,7 +186,8 @@ func (c *HippoNetworkClient) TryUpdateNeighbors() {
 // Ping ...
 // Ping and update neighbors.
 func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
-	p2pClient := c.p2pClient.Empty()
+	var p2pClient P2PClientInterface
+	var err error
 	logger.Debug("ping", address)
 
 	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
@@ -189,28 +199,21 @@ func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 	ok = false
 
 	go func(done chan error) {
-		err := p2pClient.New(ctx, c.protocol, address)
-		if err != nil {
-			logger.Error(err)
-			c.neighbors.Delete(address)
-			ok = false
-			done <- nil
-			return
+		p2pClient = c.networkPool.Get(address)
+		if p2pClient != nil {
+			var reply string
+			err = p2pClient.Ping("", &reply)
+			if err == nil {
+				t = time.Since(t0).Milliseconds()
+				ok = true
+				done <- nil
+				return
+			}
 		}
-		defer p2pClient.Close()
-
-		var reply string
-		err = p2pClient.Ping("", &reply)
-		if err != nil {
-			logger.Error(err)
-			c.neighbors.Delete(address)
-			ok = false
-			done <- nil
-			return
-		}
-		t = time.Since(t0).Milliseconds()
-		ok = true
+		logger.Error(err)
+		c.networkPool.Update(address)
 		done <- nil
+		return
 	}(done)
 
 	select {
@@ -218,10 +221,9 @@ func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 		logger.Debug("ping finished.")
 	case <-ctx.Done():
 		logger.Debug("ping timeout")
-		p2pClient.Close()
 	}
 
-	logger.Debug("ping done", address)
+	// logger.Debug("ping done", address)
 
 	if ok {
 		c.neighbors.Store(address, t)
@@ -229,6 +231,48 @@ func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 		c.neighbors.Delete(address)
 	}
 	return t, true
+}
+
+// BroadcastBlock ...
+func (c *HippoNetworkClient) BroadcastBlock(address string, block BroadcastBlock,
+	reply *string) error {
+	var p2pClient P2PClientInterface
+	var err error
+	var ok bool
+	logger.Debug("netowrk client: broadcast block", address)
+
+	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
+	done := make(chan error, 1)
+
+	defer cancel()
+	ok = false
+
+	go func(done chan error) {
+		p2pClient = c.networkPool.Get(address)
+		if p2pClient != nil {
+			err = p2pClient.BroadcastBlock(&block, reply)
+			if err == nil {
+				ok = true
+				done <- nil
+				return
+			}
+		}
+		logger.Error(err)
+		done <- nil
+		return
+	}(done)
+
+	select {
+	case <-done:
+		logger.Debug("netowrk client: broadcast block finished.")
+		if ok {
+			return nil
+		}
+		return err
+	case <-ctx.Done():
+		logger.Debug("netowrk client: broadcast block timeout")
+		return errors.New("netowrk client: broadcast block timeout")
+	}
 }
 
 // NeighborPing ...
@@ -300,3 +344,6 @@ func (c *HippoNetworkClient) SyncNeighbors() {
 func (c *HippoNetworkClient) StopSyncNeighbors() {
 	c.syncCancel()
 }
+
+// GetAddress ...
+func (c *HippoNetworkClient) GetAddress() string { return c.address }

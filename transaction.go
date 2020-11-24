@@ -21,6 +21,7 @@ type Transaction interface {
 		receiverAmounts []uint64) bool
 	SenderSum() uint64
 	ReceiverSum() uint64
+	GetBalanceChange() map[string]int64
 	UpdateFee() bool
 	CheckFee() bool
 	CheckBalance(balance Balance) bool
@@ -236,3 +237,25 @@ func (t *HippoTransaction) GetTimestamp() int64 { return t.Timestamp }
 
 // GetFee ...
 func (t *HippoTransaction) GetFee() uint64 { return t.Fee }
+
+// GetBalanceChange ...
+func (t *HippoTransaction) GetBalanceChange() map[string]int64 {
+	t.UpdateFee()
+	result := make(map[string]int64)
+	for i := range t.SenderAddresses {
+		if v, has := result[t.SenderAddresses[i]]; !has {
+			result[t.SenderAddresses[i]] = -int64(v)
+		} else {
+			result[t.SenderAddresses[i]] -= v
+		}
+	}
+	for i := range t.ReceiverAddresses {
+		if v, has := result[t.ReceiverAddresses[i]]; !has {
+			result[t.ReceiverAddresses[i]] = int64(v)
+		} else {
+			result[t.ReceiverAddresses[i]] += v
+		}
+	}
+	result["fee"] = int64(t.Fee)
+	return result
+}

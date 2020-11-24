@@ -83,6 +83,7 @@ func (s *P2PServer) setBroadcastQueue(broadcastQueue BroadcastQueue) {
 
 // Ping ...
 func (s *P2PServer) Ping(request string, reply *string) error {
+	logger.Debug("receive ping:", request)
 	*reply = request
 	return nil
 }
@@ -123,6 +124,7 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 
 	// and broadcast.
 	if s.broadcastQueue != nil {
+		broadcastBlock.Level++
 		s.broadcastQueue.Add(broadcastBlock)
 	} else {
 		logger.Debug("no broadcast queue in rpc server")

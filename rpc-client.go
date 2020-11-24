@@ -49,7 +49,7 @@ func (c *P2PClient) New(ctx context.Context, protocol string, address string) (e
 	c.parentCtx = ctx
 	c.c, err = rpc.DialHTTP(protocol, address)
 	if err != nil {
-		logger.Error(err)
+		logger.Error(err, protocol, address)
 	}
 	return
 }
@@ -65,6 +65,8 @@ func (c *P2PClient) Copy() P2PClientInterface {
 
 // Close ...
 func (c *P2PClient) Close() {
+	defer logger.Debug("ping close.")
+
 	c.cancel()
 	if c.c != nil {
 		c.c.Close()

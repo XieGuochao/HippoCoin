@@ -75,7 +75,7 @@ func (b *BroadcastBlock) Encode() []byte {
 	b.Transactions = b.Block.GetTransactions()
 	b.Block.SetTransactions([]Transaction{})
 	bytes, err = json.Marshal(b)
-	logger.Debug("encode:", string(bytes), err)
+	logger.Debug("encode:", err)
 	return bytes
 }
 

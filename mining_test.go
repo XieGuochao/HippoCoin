@@ -23,7 +23,7 @@ func TestMiningOK(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	testMiningFunction.New(ctx, testHashfunction, 1)
+	testMiningFunction.New(testHashfunction, 1)
 
 	miningQueue := new(MiningQueue)
 	// logger.Debug("hash function:", &testHashfunction)
@@ -65,7 +65,7 @@ func TestMiningStop(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	testMiningFunction.New(ctx, testHashfunction, 1)
+	testMiningFunction.New(testHashfunction, 1)
 
 	miningQueue := new(MiningQueue)
 	// logger.Debug("hash function:", &testHashfunction)
@@ -108,7 +108,7 @@ func TestMiningMultipleOK(t *testing.T) {
 	defer cancel()
 
 	testMiningFunction = new(multipleMiningFunction)
-	testMiningFunction.New(ctx, testHashfunction, 4)
+	testMiningFunction.New(testHashfunction, 4)
 
 	miningQueue := new(MiningQueue)
 	// logger.Debug("hash function:", &testHashfunction)

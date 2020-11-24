@@ -25,6 +25,7 @@ type Block interface {
 	ParentHash() string
 	SetTransactions(tr []Transaction)
 	GetTransactions() (tr []Transaction)
+	GetNumBytes() uint
 	Sign(key Key)
 	SetNonce(nonce uint32)
 	SetBalance(b Balance)
@@ -40,6 +41,7 @@ type Block interface {
 	CheckNonce() bool
 	Check() bool
 	GetLevel() int
+	GetBalanceChange() map[string]int64
 }
 
 // HippoBlock ...
@@ -123,6 +125,9 @@ func (b *HippoBlock) GetTransactions() (tr []Transaction) {
 	return b.transactions
 }
 
+// GetNumBytes ...
+func (b *HippoBlock) GetNumBytes() uint { return b.NumBytes }
+
 // SetNonce ...
 func (b *HippoBlock) SetNonce(nonce uint32) {
 	b.Nonce = nonce
@@ -182,7 +187,6 @@ func (b *HippoBlock) generateSignature(key Key) (string, error) {
 func (b *HippoBlock) CheckSignature() bool {
 	var key Key
 	key.LoadPublicKeyString(b.MinerAddress, b.curve)
-	logger.Debug("public key:", b.MinerAddress)
 	return key.CheckSignString(b.Hash(), b.Signature())
 }
 
@@ -208,6 +212,29 @@ func (b *HippoBlock) Check() bool {
 
 // GetLevel ...
 func (b *HippoBlock) GetLevel() int { return b.Level }
+
+// GetBalanceChange ...
+func (b *HippoBlock) GetBalanceChange() map[string]int64 {
+	balanceChange := make(map[string]int64)
+	for _, tr := range b.transactions {
+		for k, v := range tr.GetBalanceChange() {
+			if k == "fee" {
+				k = b.MinerAddress
+			}
+			if _, has := balanceChange[k]; !has {
+				balanceChange[k] = v
+			} else {
+				balanceChange[k] += v
+			}
+		}
+	}
+	if _, has := balanceChange[b.MinerAddress]; !has {
+		balanceChange[b.MinerAddress] = Reward(b)
+	} else {
+		balanceChange[b.MinerAddress] += Reward(b)
+	}
+	return balanceChange
+}
 
 // CreateGenesisBlock ...
 func CreateGenesisBlock(numBytes uint, hashFunction HashFunction,

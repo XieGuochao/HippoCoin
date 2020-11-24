@@ -5,9 +5,17 @@ import (
 )
 
 // BroadcastQueue ...
+// Steps:
+// 1. New(ctx, protocol, p2pClient)
+// 2. (init network client)
+// 3. SetNetworkClient(networkClient)
+// 4. Run()
+// 5. Add(block)
+// 6. Stop()
 type BroadcastQueue interface {
-	New(ctx context.Context, protocol string,
-		networkClient *NetworkClient, p2pClient P2PClientInterface)
+	New(ctx context.Context, protocol string, p2pClient P2PClientInterface,
+		maxBroadcastLevel uint)
+	SetNetworkClient(networkClient NetworkClient)
 	Add(b BroadcastBlock)
 	Run()
 	Stop()
@@ -19,25 +27,34 @@ type HippoBroadcastQueue struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
 	channel       chan BroadcastBlock
-	networkClient *NetworkClient
+	networkClient NetworkClient
 	protocol      string
 	p2pClient     P2PClientInterface
+
+	maxBroadcastLevel uint
 }
 
 // New ...
 func (bq *HippoBroadcastQueue) New(ctx context.Context, protocol string,
-	networkClient *NetworkClient, p2pClient P2PClientInterface) {
+	p2pClient P2PClientInterface, maxBroadcastLevel uint) {
 	bq.ctx, bq.cancel = context.WithCancel(ctx)
 	bq.channel = make(chan BroadcastBlock, 10)
 	bq.protocol = protocol
-	bq.networkClient = networkClient
 	bq.p2pClient = p2pClient
+	bq.maxBroadcastLevel = maxBroadcastLevel
+}
+
+// SetNetworkClient ...
+func (bq *HippoBroadcastQueue) SetNetworkClient(networkClient NetworkClient) {
+	bq.networkClient = networkClient
 }
 
 // Add ...
 func (bq *HippoBroadcastQueue) Add(b BroadcastBlock) {
-	bq.channel <- b
-	logger.Debug("broadcast queue add:", b.Block.Hash())
+	if b.Level < bq.maxBroadcastLevel {
+		bq.channel <- b
+		logger.Debug("broadcast queue add:", b.Block.Hash())
+	}
 }
 
 // Run ...
@@ -64,19 +81,31 @@ func (bq *HippoBroadcastQueue) Stop() {
 
 func (bq *HippoBroadcastQueue) broadcastBlockSend(block BroadcastBlock) {
 	logger.Debug("receive broadcast block")
-	addresses := (*bq.networkClient).GetNeighbors()
+	addresses := bq.networkClient.GetNeighbors()
+	logger.Debug("neighbors all:", addresses)
+
+	addressesToSend := make(map[string]bool)
 	for _, address := range addresses {
+		addressesToSend[address] = true
+	}
+	for address := range block.Addresses {
+		delete(addressesToSend, address)
+	}
+	delete(addressesToSend, bq.networkClient.GetAddress())
+
+	for address := range addressesToSend {
 		block.Addresses[address] = true
 	}
-	for _, address := range addresses {
+	logger.Debug("neighbors to send:", addressesToSend)
+	for address := range addressesToSend {
 		logger.Debug("send broadcast block to", address)
 		var reply string
-		var client P2PClientInterface
-		client = bq.p2pClient.Empty()
-		if client.New(bq.ctx, bq.protocol, address) == nil {
-			client.BroadcastBlock(&block, &reply)
-			client.Close()
+		if bq.networkClient == nil {
+			logger.Error("broadcast-queue: no netowrk client")
+			break
 		}
+
+		bq.networkClient.BroadcastBlock(address, block, &reply)
 	}
 	logger.Debug("broadcast send done.")
 }

@@ -13,19 +13,20 @@ type Balance interface {
 	StoreUnsafe(address string, value uint64)
 	Get(address string) uint64
 	GetUnsafe(address string) uint64
+	AllBalance() map[string]uint64
 	Update(address string, change int64) (uint64, bool)
 	UpdateUnsafe(address string, change int64) (uint64, bool)
 }
 
 // HippoBalance ...
 type HippoBalance struct {
-	lock         sync.Mutex
-	HippoBalance map[string]uint64
+	lock    sync.Mutex
+	balance map[string]uint64
 }
 
 // New ...
 func (b *HippoBalance) New() {
-	b.HippoBalance = make(map[string]uint64)
+	b.balance = make(map[string]uint64)
 }
 
 // Lock ...
@@ -47,7 +48,7 @@ func (b *HippoBalance) Store(address string, value uint64) {
 
 // StoreUnsafe ...
 func (b *HippoBalance) StoreUnsafe(address string, value uint64) {
-	b.HippoBalance[address] = value
+	b.balance[address] = value
 }
 
 // Get ...
@@ -63,11 +64,22 @@ func (b *HippoBalance) GetUnsafe(address string) uint64 {
 		value uint64
 		has   bool
 	)
-	if value, has = b.HippoBalance[address]; !has {
+	if value, has = b.balance[address]; !has {
 		value = 0
-		b.HippoBalance[address] = 0
+		b.balance[address] = 0
 	}
 	return value
+}
+
+// AllBalance ...
+func (b *HippoBalance) AllBalance() map[string]uint64 {
+	b.Lock()
+	defer b.Unlock()
+	balanceMap := make(map[string]uint64)
+	for key, value := range b.balance {
+		balanceMap[key] = value
+	}
+	return balanceMap
 }
 
 // Update ...
@@ -83,13 +95,13 @@ func (b *HippoBalance) UpdateUnsafe(address string, change int64) (uint64, bool)
 		value uint64
 		has   bool
 	)
-	if value, has = b.HippoBalance[address]; !has {
+	if value, has = b.balance[address]; !has {
 		value = 0
-		b.HippoBalance[address] = 0
+		b.balance[address] = 0
 	}
 	if int64(value)+change > 0 {
 		value = uint64(int64(value) + change)
-		b.HippoBalance[address] = value
+		b.balance[address] = value
 		return value, true
 	}
 	return value, false

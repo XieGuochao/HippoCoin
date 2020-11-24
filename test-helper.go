@@ -24,12 +24,12 @@ var (
 	testIP                string
 	testPort              int
 	testAddress           string
-	testProtocol          string
+	testProtocol          = "tcp"
 	testP2PClientTemplate = P2PClient{}
 	testP2PServer         P2PServiceInterface
 
-	testRegisterAddress  string
-	testRegisterProtocol string
+	testRegisterAddress  = "localhost:9325"
+	testRegisterProtocol = "tcp"
 
 	testWaitGroup sync.WaitGroup
 
@@ -59,6 +59,8 @@ func initTest(number int) {
 	logger.WithColor()
 	initKeys(number)
 	testMiningFunction = new(singleMiningFunction)
+	testBalance = new(HippoBalance)
+	testBalance.New()
 	testContext, testCancel = context.WithCancel(context.Background())
 }
 
@@ -70,25 +72,26 @@ func initBalance() {
 func initStorage() {
 	testStorage = new(HippoStorage)
 	testStorage.New()
+	testStorage.SetBalance(testBalance)
 }
 
 func initBroadcastQueue() {
 	testBroadcastQueue = new(HippoBroadcastQueue)
-	testBroadcastQueue.New(testContext, testProtocol, &testNetworkClient, &testP2PClientTemplate)
-	testBroadcastQueue.Run()
+	testBroadcastQueue.New(testContext, testProtocol, &testP2PClientTemplate, 5)
 }
 
 func initMining() {
 	testMining = new(HippoMining)
+	testMining.SetBroadcastQueue(testBroadcastQueue)
+	testMining.SetStorage(testStorage)
 	testMiningFunction = new(singleMiningFunction)
-	testMiningFunction.New(testContext, testHashfunction, 1)
+	testMiningFunction.New(testHashfunction, 1)
 }
 
 func initMiningQueue() {
 	testMiningQueue.New(testContext, miningCallbackBroadcastSave, testHashfunction, testMiningFunction)
 	testMiningQueue.SetBroadcastQueue(testBroadcastQueue)
 	testMiningQueue.SetStorage(testStorage)
-	testMiningQueue.Run(&testWaitGroup)
 }
 
 func initTransactionPool() {
@@ -112,10 +115,6 @@ func initPrenetwork() {
 
 func initNetwork() {
 	testIP = registerlib.GetOutboundIP().String()
-	testProtocol = "tcp"
-	testRegisterAddress = "localhost:9325"
-	testRegisterProtocol = "tcp"
-	testHashfunction = hash
 	testBlockTemplate = new(HippoBlock)
 	testBlockTemplate.New([]byte{}, 0, testHashfunction, 0, testBalance, testCurve)
 
@@ -144,8 +143,14 @@ func initNetwork() {
 
 	testNetworkClient = new(HippoNetworkClient)
 	testNetworkClient.New(testContext, testAddress, testProtocol,
-		10, testRegister, 5, 3, &testP2PClientTemplate)
+		10, testRegister, 5, 2, &testP2PClientTemplate)
 
+	testBroadcastQueue.SetNetworkClient(testNetworkClient)
 	logger.Info("create network client")
 
+}
+
+func initNetworkRun() {
+	testBroadcastQueue.Run()
+	testMiningQueue.Run(&testWaitGroup)
 }
