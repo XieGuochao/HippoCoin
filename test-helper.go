@@ -39,6 +39,8 @@ var (
 	testTransactionPool TransactionPool
 	testStorage         Storage
 	testBroadcastQueue  BroadcastQueue
+
+	testBlockTemplate Block
 )
 
 func initKeys(number int) {
@@ -57,6 +59,55 @@ func initTest(number int) {
 	logger.WithColor()
 	initKeys(number)
 	testMiningFunction = new(singleMiningFunction)
+	testContext, testCancel = context.WithCancel(context.Background())
+}
+
+func initBalance() {
+	testBalance := new(HippoBalance)
+	testBalance.New()
+}
+
+func initStorage() {
+	testStorage = new(HippoStorage)
+	testStorage.New()
+}
+
+func initBroadcastQueue() {
+	testBroadcastQueue = new(HippoBroadcastQueue)
+	testBroadcastQueue.New(testContext, testProtocol, &testNetworkClient, &testP2PClientTemplate)
+	testBroadcastQueue.Run()
+}
+
+func initMining() {
+	testMining = new(HippoMining)
+	testMiningFunction = new(singleMiningFunction)
+	testMiningFunction.New(testContext, testHashfunction, 1)
+}
+
+func initMiningQueue() {
+	testMiningQueue.New(testContext, miningCallbackBroadcastSave, testHashfunction, testMiningFunction)
+	testMiningQueue.SetBroadcastQueue(testBroadcastQueue)
+	testMiningQueue.SetStorage(testStorage)
+	testMiningQueue.Run(&testWaitGroup)
+}
+
+func initTransactionPool() {
+	testTransactionPool = new(HippoTransactionPool)
+	testTransactionPool.New(testBalance)
+	testMining.New(&testMiningQueue, testTransactionPool, 10, 600, testBalance, testKeys[0])
+}
+
+func initMinings() {
+	initMining()
+	initMiningQueue()
+	initTransactionPool()
+}
+
+func initPrenetwork() {
+	initBalance()
+	initStorage()
+	initBroadcastQueue()
+	initMinings()
 }
 
 func initNetwork() {
@@ -64,6 +115,9 @@ func initNetwork() {
 	testProtocol = "tcp"
 	testRegisterAddress = "localhost:9325"
 	testRegisterProtocol = "tcp"
+	testHashfunction = hash
+	testBlockTemplate = new(HippoBlock)
+	testBlockTemplate.New([]byte{}, 0, testHashfunction, 0, testBalance, testCurve)
 
 	testContext, testCancel = context.WithCancel(context.Background())
 
@@ -78,6 +132,9 @@ func initNetwork() {
 
 	testP2PServer = new(P2PServer)
 	testP2PServer.new(testContext, testNetworkListener.Listener())
+	testP2PServer.setBroadcastQueue(testBroadcastQueue)
+	testP2PServer.setStorage(testStorage)
+	testP2PServer.setBlockTemplate(testBlockTemplate)
 	testP2PServer.serve()
 
 	testRegister = new(HippoRegister)

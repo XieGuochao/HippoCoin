@@ -88,12 +88,14 @@ func (l *HippoNetworkListener) Listener() net.Listener {
 // Steps:
 // 1. New(ctx, address, protocol, maxNeighbors, register, updateTimeBase, updateTimeRand, p2pClient)
 // p2pClient is only a template.
+// 1.(1) SetMaxPing(int64)
 // 2. SyncNeighbors()
 // 3. StopSyncNeighbors()
 // 4. CountNeighbors()  UpdateNeighbors()  Ping(address)
 type NetworkClient interface {
 	New(ctx context.Context, address string, protocol string, maxNeighbors int,
 		register Register, updateTimeBase, updateTimeRand int, p2pClient P2PClientInterface)
+	SetMaxPing(int64)
 	CountNeighbors() int
 	UpdateNeighbors()
 	GetNeighbors() []string
@@ -114,6 +116,7 @@ type HippoNetworkClient struct {
 	updateTimeBase    int
 	updateTimeRand    int
 	p2pClient         P2PClientInterface
+	maxPing           int64
 }
 
 // New ...
@@ -126,7 +129,11 @@ func (c *HippoNetworkClient) New(ctx context.Context, address string, protocol s
 	c.maxNeighbors = maxNeighbors
 	c.updateTimeBase, c.updateTimeRand = updateTimeBase, updateTimeRand
 	c.p2pClient = p2pClient
+	c.maxPing = 2e3 // 2 seconds
 }
+
+// SetMaxPing ...
+func (c *HippoNetworkClient) SetMaxPing(t int64) { c.maxPing = t }
 
 // CountNeighbors ...
 func (c *HippoNetworkClient) CountNeighbors() (count int) {
@@ -169,27 +176,58 @@ func (c *HippoNetworkClient) TryUpdateNeighbors() {
 
 // Ping ...
 // Ping and update neighbors.
-func (c *HippoNetworkClient) Ping(address string) (int64, bool) {
+func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 	p2pClient := c.p2pClient.Empty()
 	logger.Debug("ping", address)
-	err := p2pClient.New(c.ctx, c.protocol, address)
-	if err != nil {
-		logger.Error(err)
-		c.neighbors.Delete(address)
-		return 0, false
-	}
-	defer p2pClient.Close()
-	t0 := time.Now()
 
-	var reply string
-	err = p2pClient.Ping("", &reply)
-	if err != nil {
-		logger.Error(err)
-		c.neighbors.Delete(address)
-		return 0, false
+	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
+	done := make(chan error, 1)
+
+	defer cancel()
+	t0 := time.Now()
+	t = c.maxPing + 1
+	ok = false
+
+	go func(done chan error) {
+		err := p2pClient.New(ctx, c.protocol, address)
+		if err != nil {
+			logger.Error(err)
+			c.neighbors.Delete(address)
+			ok = false
+			done <- nil
+			return
+		}
+		defer p2pClient.Close()
+
+		var reply string
+		err = p2pClient.Ping("", &reply)
+		if err != nil {
+			logger.Error(err)
+			c.neighbors.Delete(address)
+			ok = false
+			done <- nil
+			return
+		}
+		t = time.Since(t0).Milliseconds()
+		ok = true
+		done <- nil
+	}(done)
+
+	select {
+	case <-done:
+		logger.Debug("ping finished.")
+	case <-ctx.Done():
+		logger.Debug("ping timeout")
+		p2pClient.Close()
 	}
-	t := time.Since(t0).Nanoseconds()
-	c.neighbors.Store(address, t)
+
+	logger.Debug("ping done", address)
+
+	if ok {
+		c.neighbors.Store(address, t)
+	} else {
+		c.neighbors.Delete(address)
+	}
 	return t, true
 }
 
@@ -210,6 +248,7 @@ func (c *HippoNetworkClient) EvictNeighbors() {
 		})
 		return true
 	})
+	logger.Debug(neighbors)
 	if len(neighbors) < c.maxNeighbors {
 		return
 	}
@@ -243,8 +282,13 @@ func (c *HippoNetworkClient) SyncNeighbors() {
 				return
 			default:
 				c.TryUpdateNeighbors()
+				logger.Debug("neighbors:", c.GetNeighbors())
+
 				c.EvictNeighbors()
+				logger.Debug("neighbors after eviction:", c.GetNeighbors())
+
 				seconds := c.updateTimeBase + rand.Intn(c.updateTimeRand)
+				logger.Debug("sync neighbors stop:", seconds)
 				time.Sleep(time.Second * time.Duration(seconds))
 			}
 		}

@@ -49,7 +49,7 @@ func (bq *HippoBroadcastQueue) Run() {
 				logger.Info("broadcast queue closed.")
 				return
 			case block := <-bq.channel:
-				logger.Debug("receive broadcast block")
+				logger.Debug("broadcast queue receive broadcast block")
 
 				bq.broadcastBlockSend(block)
 			}
@@ -69,6 +69,7 @@ func (bq *HippoBroadcastQueue) broadcastBlockSend(block BroadcastBlock) {
 		block.Addresses[address] = true
 	}
 	for _, address := range addresses {
+		logger.Debug("send broadcast block to", address)
 		var reply string
 		var client P2PClientInterface
 		client = bq.p2pClient.Empty()

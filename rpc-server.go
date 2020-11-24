@@ -12,11 +12,13 @@ import (
 // 1. new(ctx)
 // 2. setStorage(storage)
 // 3. setBroadcastQueue(broadcastQueue)
-// 4. serve()
+// 4. setBlockTemplate(block) : curve, hashFunction, balance
+// 5. serve()
 type P2PServiceInterface interface {
 	new(context.Context, net.Listener)
 	setStorage(Storage)
 	setBroadcastQueue(BroadcastQueue)
+	setBlockTemplate(block Block)
 	Ping(request string, reply *string) error
 	BroadcastBlock(sendBlockByte []byte, reply *string) error
 	QueryLevel(q QueryLevelStruct, reply *[]byte) error
@@ -35,6 +37,8 @@ type P2PServer struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
 	listener       net.Listener
+
+	blockTemplate Block
 }
 
 // new ...
@@ -43,8 +47,11 @@ func (s *P2PServer) new(parentContext context.Context, listener net.Listener) {
 	s.listener = listener
 	logger.Info("register p2p server error:", RegisterP2PService(s))
 	rpc.HandleHTTP()
+	logger.Info("start serving HTTP")
 	go http.Serve(listener, nil)
 }
+
+func (s *P2PServer) setBlockTemplate(block Block) { s.blockTemplate = block }
 
 // serve ...
 func (s *P2PServer) serve() {
@@ -98,6 +105,8 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 	receiveBlock.Decode(&broadcastBlock)
 	logger.Debug("receive block:", broadcastBlock)
 	block = broadcastBlock.Block
+
+	block.CopyConstants(s.blockTemplate)
 
 	// Check block
 	if !block.Check() {

@@ -27,6 +27,13 @@ type Block interface {
 	GetTransactions() (tr []Transaction)
 	Sign(key Key)
 	SetNonce(nonce uint32)
+	SetBalance(b Balance)
+	GetBalance() Balance
+	SetHashFunction(hashFunction HashFunction)
+	GetHashFunction() HashFunction
+	SetCurve(curve elliptic.Curve)
+	GetCurve() elliptic.Curve
+	CopyConstants(b Block)
 	Signature() string
 	CheckSignature() bool
 	CheckTransactions() bool
@@ -119,6 +126,31 @@ func (b *HippoBlock) GetTransactions() (tr []Transaction) {
 // SetNonce ...
 func (b *HippoBlock) SetNonce(nonce uint32) {
 	b.Nonce = nonce
+}
+
+// SetBalance ...
+func (b *HippoBlock) SetBalance(balance Balance) { b.balance = balance }
+
+// GetBalance ...
+func (b *HippoBlock) GetBalance() Balance { return b.balance }
+
+// GetHashFunction ...
+func (b *HippoBlock) GetHashFunction() HashFunction { return b.hashFunction }
+
+// SetHashFunction ...
+func (b *HippoBlock) SetHashFunction(hashFunction HashFunction) { b.hashFunction = hashFunction }
+
+// GetCurve ...
+func (b *HippoBlock) GetCurve() elliptic.Curve { return b.curve }
+
+// SetCurve ...
+func (b *HippoBlock) SetCurve(curve elliptic.Curve) { b.curve = curve }
+
+// CopyConstants ...
+func (b *HippoBlock) CopyConstants(block Block) {
+	b.curve = block.GetCurve()
+	b.balance = block.GetBalance()
+	b.hashFunction = block.GetHashFunction()
 }
 
 // Sign ...

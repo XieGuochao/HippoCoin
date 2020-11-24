@@ -98,5 +98,6 @@ func (c *P2PClient) QueryLevel(level0, level1 int, reply *[]Block) error {
 
 // BroadcastBlock ...
 func (c *P2PClient) BroadcastBlock(data NetworkSendInterface, reply *string) error {
+	logger.Debug("broadcastBlock to send", data)
 	return c.c.Call(P2PServiceName+".BroadcastBlock", data.Encode(), reply)
 }

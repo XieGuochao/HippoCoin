@@ -117,6 +117,10 @@ func (t *HippoTransaction) CheckFee() bool {
 // CheckBalance ...
 // Check with the address balance.
 func (t *HippoTransaction) CheckBalance(balance Balance) bool {
+	if balance == nil {
+		logger.Error("no balance for transaction check")
+		return false
+	}
 	balance.Lock()
 	defer balance.Unlock()
 	safe := true
