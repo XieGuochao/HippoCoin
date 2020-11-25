@@ -111,6 +111,8 @@ type NetworkClient interface {
 	QueryLevel(address string, level0, level1 int, reply *[]string) error
 	QueryByHash(address string, hashValue string) Block
 	QueryHashes(address string, hashes []string) (blocks []Block)
+	SyncBlocks(address string, storage Storage)
+	SyncAddressesN(n int, storage Storage)
 }
 
 // HippoNetworkClient ...
@@ -405,6 +407,47 @@ func (c *HippoNetworkClient) QueryHashes(address string, hashes []string) (block
 	case <-ctx.Done():
 		logger.Debug("netowrk client: query hashes timeout")
 		return nil
+	}
+}
+
+// SyncBlocks ...
+// Sync blocks from the first level up to the latest one.
+func (c *HippoNetworkClient) SyncBlocks(address string, storage Storage) {
+	level0, level1 := 0, 4
+	var hashes []string
+	var err error
+	var newBlocks []Block
+	for {
+		logger.Infof("sync blocks %s %d-%d", address, level0, level1)
+		err = c.QueryLevel(address, level0, level1, &hashes)
+		if err != nil {
+			logger.Error("sync block error:", err)
+			return
+		}
+		hashes = storage.FilterNewHashes(hashes)
+		if len(hashes) == 0 {
+			logger.Infof("syncBlocks %s done", address)
+			break
+		}
+		newBlocks = c.QueryHashes(address, hashes)
+		if len(newBlocks) == 0 {
+			logger.Infof("syncBlocks %s done", address)
+			break
+		}
+		storage.AddBlocks(newBlocks)
+		level0, level1 = level1+1, level1+5
+	}
+}
+
+// SyncAddressesN ...
+func (c *HippoNetworkClient) SyncAddressesN(n int, storage Storage) {
+	addresses := c.GetNeighbors()
+	if n > len(addresses) {
+		n = len(addresses)
+	}
+	addresses = addresses[:n]
+	for _, address := range addresses {
+		go c.SyncBlocks(address, storage)
 	}
 }
 

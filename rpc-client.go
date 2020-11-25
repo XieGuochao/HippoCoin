@@ -141,6 +141,6 @@ func (c *P2PClient) QueryHashes(hashes []string) (block []Block) {
 
 // BroadcastBlock ...
 func (c *P2PClient) BroadcastBlock(data NetworkSendInterface, reply *string) error {
-	logger.Debug("broadcastBlock to send", data)
+	// logger.Debug("broadcastBlock to send", data)
 	return c.c.Call(P2PServiceName+".BroadcastBlock", data.Encode(), reply)
 }

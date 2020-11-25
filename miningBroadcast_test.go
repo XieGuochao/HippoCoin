@@ -15,7 +15,7 @@ func TestMiningBroadcast(t *testing.T) {
 
 	var block Block
 	block = new(HippoBlock)
-	block.New([]byte{}, 231, testHashfunction, 0, testBalance, testCurve)
+	block.New([]byte{}, 232, testHashfunction, 0, testBalance, testCurve)
 
 	logger.Debug("going to fetch")
 
@@ -26,7 +26,7 @@ func TestMiningBroadcast(t *testing.T) {
 
 	for {
 		time.Sleep(time.Second * time.Duration(5))
-		logger.Info("block hashes:", testStorage.AllHashesInLevel())
+		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
 		logger.Info("balance:", testBalance.AllBalance())
 	}
 }
@@ -120,6 +120,41 @@ func TestQueryHashes(t *testing.T) {
 				logger.Info("update new block:", b.Hash())
 			}
 		}
-		logger.Info("block hashes:", testStorage.AllHashesInLevel())
+		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
+	}
+}
+
+func TestSyncBlocks(t *testing.T) {
+	initTest(1)
+	logger.Info("test sync blocks ==============================")
+
+	initPrenetwork()
+	initNetwork()
+	testNetworkClient.SyncNeighbors()
+
+	for {
+		time.Sleep(time.Second * time.Duration(10))
+		neighbors := testNetworkClient.GetNeighbors()
+		if len(neighbors) == 0 {
+			continue
+		}
+
+		testNetworkClient.SyncBlocks(neighbors[0], testStorage)
+		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
+	}
+}
+
+func TestSyncAddressesN(t *testing.T) {
+	initTest(1)
+	logger.Info("test sync addresses n ==============================")
+
+	initPrenetwork()
+	initNetwork()
+	testNetworkClient.SyncNeighbors()
+
+	for {
+		time.Sleep(time.Second * time.Duration(10))
+		testNetworkClient.SyncAddressesN(3, testStorage)
+		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
 	}
 }
