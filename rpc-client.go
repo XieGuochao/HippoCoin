@@ -18,6 +18,7 @@ const P2PServiceName = "github.com/XieGuochao/HippoCoin"
 // - Broadcast
 // - QueryLevel
 // - QueryByHash: require SetTemplateBlock(block)
+// - QueryHashes: require SetTemplateBlock(block)
 type P2PClientInterface interface {
 	Empty() P2PClientInterface
 	New(ctx context.Context, protocol string, address string) error
@@ -30,6 +31,7 @@ type P2PClientInterface interface {
 	BroadcastBlock(data NetworkSendInterface, reply *string) error
 	QueryLevel(level0, level1 int, reply *[]string) error
 	QueryByHash(hashValue string) (block Block)
+	QueryHashes(hashes []string) (block []Block)
 }
 
 // P2PClient ...
@@ -119,6 +121,17 @@ func (c *P2PClient) QueryByHash(hashValue string) (block Block) {
 		logger.Error("query by hash: cannot decode block")
 	}
 	return
+}
+
+// QueryHashes ...
+func (c *P2PClient) QueryHashes(hashes []string) (block []Block) {
+	block = make([]Block, 0)
+	for _, h := range hashes {
+		if b := c.QueryByHash(h); b != nil {
+			block = append(block, b)
+		}
+	}
+	return block
 }
 
 // // BroadcastData ...

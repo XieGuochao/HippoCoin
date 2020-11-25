@@ -110,6 +110,7 @@ type NetworkClient interface {
 	BroadcastBlock(address string, broadcastBlock BroadcastBlock, reply *string) error
 	QueryLevel(address string, level0, level1 int, reply *[]string) error
 	QueryByHash(address string, hashValue string) Block
+	QueryHashes(address string, hashes []string) (blocks []Block)
 }
 
 // HippoNetworkClient ...
@@ -355,13 +356,54 @@ func (c *HippoNetworkClient) QueryByHash(address string, hashValue string) (bloc
 
 	select {
 	case <-done:
-		logger.Debug("netowrk client: query level finished.")
+		logger.Debug("netowrk client: query by hash finished.")
 		if ok {
 			return block
 		}
 		return nil
 	case <-ctx.Done():
-		logger.Debug("netowrk client: query level timeout")
+		logger.Debug("netowrk client: query by hash timeout")
+		return nil
+	}
+}
+
+// QueryHashes ...
+func (c *HippoNetworkClient) QueryHashes(address string, hashes []string) (blocks []Block) {
+	var p2pClient P2PClientInterface
+	var err error
+	var ok bool
+	logger.Debug("netowrk client: query hashes", address, hashes)
+
+	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing*5))
+	done := make(chan error, 1)
+
+	defer cancel()
+	ok = false
+
+	go func(done chan error) {
+		p2pClient = c.networkPool.Get(address)
+		if p2pClient != nil {
+			blocks = p2pClient.QueryHashes(hashes)
+			if blocks != nil {
+				ok = true
+				done <- nil
+				return
+			}
+		}
+		logger.Error(err)
+		done <- nil
+		return
+	}(done)
+
+	select {
+	case <-done:
+		logger.Debug("netowrk client: query hashes finished.")
+		if ok {
+			return blocks
+		}
+		return nil
+	case <-ctx.Done():
+		logger.Debug("netowrk client: query hashes timeout")
 		return nil
 	}
 }

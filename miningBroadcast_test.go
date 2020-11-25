@@ -92,3 +92,34 @@ func TestQueryGenisus(t *testing.T) {
 		}
 	}
 }
+
+func TestQueryHashes(t *testing.T) {
+	initTest(1)
+	logger.Info("test query genisus ==============================")
+
+	initPrenetwork()
+	initNetwork()
+	testNetworkClient.SyncNeighbors()
+
+	for {
+		var reply []string
+		reply = make([]string, 10)
+
+		time.Sleep(time.Second * time.Duration(5))
+		neighbors := testNetworkClient.GetNeighbors()
+		if len(neighbors) == 0 {
+			continue
+		}
+		testNetworkClient.QueryLevel(neighbors[0], 0, 5, &reply)
+		logger.Info("levels:", reply)
+		newHashes := testStorage.FilterNewHashes(reply)
+		newBlocks := testNetworkClient.QueryHashes(neighbors[0], newHashes)
+		if newBlocks != nil {
+			testStorage.AddBlocks(newBlocks)
+			for _, b := range newBlocks {
+				logger.Info("update new block:", b.Hash())
+			}
+		}
+		logger.Info("block hashes:", testStorage.AllHashesInLevel())
+	}
+}

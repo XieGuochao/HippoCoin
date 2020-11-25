@@ -10,6 +10,7 @@ import (
 type Storage interface {
 	New()
 	Add(block Block) bool
+	AddBlocks(blocks []Block)
 	CheckVerified(hashkey string) bool
 	UpdateVerified(hashkey string)
 	Get(hashKey string) (Block, bool)
@@ -20,6 +21,7 @@ type Storage interface {
 	GetTopBlock() Block
 	GetBlocksLevel(level0, level1 int) []Block
 	GetBlocksLevelHash(level0, level1 int) []string
+	FilterNewHashes(hash []string) (result []string)
 
 	Count() int
 	AllHashes() []string
@@ -156,6 +158,13 @@ func (storage *HippoStorage) Add(block Block) bool {
 	}
 
 	return false
+}
+
+// AddBlocks ...
+func (storage *HippoStorage) AddBlocks(blocks []Block) {
+	for _, b := range blocks {
+		storage.Add(b)
+	}
 }
 
 // SetMiningCancel ...
@@ -301,6 +310,19 @@ func (storage *HippoStorage) GetBlocksLevelHash(level0, level1 int) (haashes []s
 		}
 	}
 	return
+}
+
+// FilterNewHashes ...
+func (storage *HippoStorage) FilterNewHashes(hash []string) (result []string) {
+	storage.LockBlock()
+	defer storage.UnlockBlock()
+	result = make([]string, 0)
+	for _, h := range hash {
+		if _, has := storage.blocks[h]; !has {
+			result = append(result, h)
+		}
+	}
+	return result
 }
 
 // Count ...
