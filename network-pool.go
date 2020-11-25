@@ -11,13 +11,16 @@ type NetworkPool struct {
 	clientTemplate P2PClientInterface
 	parentCtx      context.Context
 	protocol       string
+	tempalteBlock  Block
 }
 
 // New ...
-func (n *NetworkPool) New(ctx context.Context, clientTemplate P2PClientInterface, protocol string) {
+func (n *NetworkPool) New(ctx context.Context, clientTemplate P2PClientInterface,
+	protocol string, templateBlock Block) {
 	n.clientTemplate = clientTemplate.Empty()
 	n.parentCtx = ctx
 	n.protocol = protocol
+	n.tempalteBlock = templateBlock
 }
 
 // Get ...
@@ -30,6 +33,7 @@ func (n *NetworkPool) Get(address string) P2PClientInterface {
 	if !has {
 		client = n.clientTemplate.Empty()
 		err = client.New(n.parentCtx, n.protocol, address)
+		client.SetTemplateBlock(n.tempalteBlock)
 		if err == nil {
 			n.data.Store(address, client)
 		} else {
@@ -55,6 +59,8 @@ func (n *NetworkPool) Update(address string) P2PClientInterface {
 
 	client = n.clientTemplate.Empty()
 	err = client.New(n.parentCtx, n.protocol, address)
+	client.SetTemplateBlock(n.tempalteBlock)
+
 	if err == nil {
 		n.data.Store(address, client)
 	} else {

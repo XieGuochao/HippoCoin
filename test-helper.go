@@ -143,7 +143,7 @@ func initNetwork() {
 
 	testNetworkClient = new(HippoNetworkClient)
 	testNetworkClient.New(testContext, testAddress, testProtocol,
-		10, testRegister, 5, 2, &testP2PClientTemplate)
+		10, testRegister, 5, 2, &testP2PClientTemplate, testBlockTemplate)
 
 	testBroadcastQueue.SetNetworkClient(testNetworkClient)
 	logger.Info("create network client")

@@ -17,24 +17,30 @@ const P2PServiceName = "github.com/XieGuochao/HippoCoin"
 // - Ping
 // - Broadcast
 // - QueryLevel
+// - QueryByHash: require SetTemplateBlock(block)
 type P2PClientInterface interface {
 	Empty() P2PClientInterface
 	New(ctx context.Context, protocol string, address string) error
 	Copy() P2PClientInterface
 	Close()
+
+	SetTemplateBlock(b Block)
+
 	Ping(request string, reply *string) error
 	BroadcastBlock(data NetworkSendInterface, reply *string) error
-	QueryLevel(level0, level1 int, reply *[]Block) error
+	QueryLevel(level0, level1 int, reply *[]string) error
+	QueryByHash(hashValue string) (block Block)
 }
 
 // P2PClient ...
 type P2PClient struct {
-	c         *rpc.Client
-	ctx       context.Context
-	cancel    context.CancelFunc
-	parentCtx context.Context
-	protocol  string
-	address   string
+	c             *rpc.Client
+	ctx           context.Context
+	cancel        context.CancelFunc
+	parentCtx     context.Context
+	protocol      string
+	address       string
+	templateBlock Block
 }
 
 // Empty ...
@@ -73,24 +79,46 @@ func (c *P2PClient) Close() {
 	}
 }
 
+// SetTemplateBlock ...
+func (c *P2PClient) SetTemplateBlock(block Block) { c.templateBlock = block }
+
 // Ping ...
 func (c *P2PClient) Ping(request string, reply *string) error {
 	return c.c.Call(P2PServiceName+".Ping", request, reply)
 }
 
 // QueryLevel ...
-func (c *P2PClient) QueryLevel(level0, level1 int, reply *[]Block) error {
-	var bytes []byte
+func (c *P2PClient) QueryLevel(level0, level1 int, reply *[]string) error {
 	err := c.c.Call(P2PServiceName+".QueryLevel",
 		QueryLevelStruct{
 			Level0: level0,
 			Level1: level1,
-		}, bytes)
+		}, reply)
 	if err != nil {
 		return err
 	}
-	*reply = DecodeBlocks(bytes)
 	return nil
+}
+
+// QueryByHash ...
+func (c *P2PClient) QueryByHash(hashValue string) (block Block) {
+	var reply []byte
+	err := c.c.Call(P2PServiceName+".QueryByHash",
+		hashValue, &reply)
+	if err != nil {
+		logger.Error("query by hash: cannot decode block:", err)
+		return nil
+	}
+
+	if c.templateBlock == nil {
+		logger.Error("query by hash: no template block")
+		return nil
+	}
+	block = DecodeBlock(reply, c.templateBlock)
+	if block == nil {
+		logger.Error("query by hash: cannot decode block")
+	}
+	return
 }
 
 // // BroadcastData ...

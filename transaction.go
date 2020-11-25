@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/elliptic"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -35,6 +36,8 @@ type Transaction interface {
 
 	GetTimestamp() int64
 	GetFee() uint64
+
+	Encode() []byte
 }
 
 // HippoTransaction ...
@@ -258,4 +261,27 @@ func (t *HippoTransaction) GetBalanceChange() map[string]int64 {
 	}
 	result["fee"] = int64(t.Fee)
 	return result
+}
+
+// Encode ...
+func (t *HippoTransaction) Encode() []byte {
+	bytes, err := json.Marshal(*t)
+	if err != nil {
+		logger.Error("encode transaction:", err)
+		return nil
+	}
+	return bytes
+}
+
+// DecodeTransaction ...
+func DecodeTransaction(bytes []byte, hash HashFunction, curve elliptic.Curve) Transaction {
+	tr := new(HippoTransaction)
+	err := json.Unmarshal(bytes, tr)
+	if err != nil {
+		logger.Error("decode transaction error:", err)
+		return nil
+	}
+	tr.hashFunction = hash
+	tr.curve = curve
+	return tr
 }

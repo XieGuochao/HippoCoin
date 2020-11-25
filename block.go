@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/elliptic"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -42,6 +43,8 @@ type Block interface {
 	Check() bool
 	GetLevel() int
 	GetBalanceChange() map[string]int64
+
+	Encode() []byte
 }
 
 // HippoBlock ...
@@ -243,4 +246,74 @@ func CreateGenesisBlock(numBytes uint, hashFunction HashFunction,
 	block.New([]byte{}, numBytes, hashFunction, 0, nil, curve)
 	block.Sign(key)
 	return block
+}
+
+// BlockEncoding ...
+type BlockEncoding struct {
+	Block        []byte
+	Transactions [][]byte
+}
+
+// Encode ...
+func (b *HippoBlock) Encode() []byte {
+	var (
+		blockBytes        []byte
+		transactionsBytes [][]byte
+		err               error
+	)
+	blockBytes, err = json.Marshal(*b)
+	if err != nil {
+		logger.Error("encoding block:", err)
+		return nil
+	}
+	transactionsBytes = make([][]byte, len(b.transactions))
+
+	for i, tr := range b.transactions {
+		transactionsBytes[i] = tr.Encode()
+		if transactionsBytes[i] == nil {
+			return nil
+		}
+	}
+
+	be := BlockEncoding{
+		Block:        blockBytes,
+		Transactions: transactionsBytes,
+	}
+	blockBytes, _ = json.Marshal(be)
+	return blockBytes
+}
+
+// DecodeBlock ...
+func DecodeBlock(bytes []byte, tempalteBlock Block) Block {
+	var b Block
+	b = new(HippoBlock)
+
+	var be BlockEncoding
+	err := json.Unmarshal(bytes, &be)
+	if err != nil {
+		logger.Error("decode block error:", err)
+		return nil
+	}
+
+	err = json.Unmarshal(be.Block, b)
+	if err != nil {
+		logger.Error("decode block error:", err)
+		return nil
+	}
+
+	b.CopyConstants(tempalteBlock)
+
+	// Set transactions
+	trs := make([]Transaction, len(be.Transactions))
+	for i, transactionBytes := range be.Transactions {
+		trs[i] = DecodeTransaction(transactionBytes, b.GetHashFunction(),
+			b.GetCurve())
+		if trs[i] == nil {
+			return nil
+		}
+	}
+	b.SetTransactions(trs)
+
+	// return b
+	return b
 }

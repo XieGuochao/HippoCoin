@@ -95,7 +95,8 @@ func (l *HippoNetworkListener) Listener() net.Listener {
 // 4. CountNeighbors()  UpdateNeighbors()  Ping(address)
 type NetworkClient interface {
 	New(ctx context.Context, address string, protocol string, maxNeighbors int,
-		register Register, updateTimeBase, updateTimeRand int, p2pClient P2PClientInterface)
+		register Register, updateTimeBase, updateTimeRand int, p2pClient P2PClientInterface,
+		templateBlock Block)
 	SetMaxPing(int64)
 	CountNeighbors() int
 	UpdateNeighbors()
@@ -107,6 +108,8 @@ type NetworkClient interface {
 	TryUpdateNeighbors()
 	Ping(address string) (int64, bool)
 	BroadcastBlock(address string, broadcastBlock BroadcastBlock, reply *string) error
+	QueryLevel(address string, level0, level1 int, reply *[]string) error
+	QueryByHash(address string, hashValue string) Block
 }
 
 // HippoNetworkClient ...
@@ -124,11 +127,14 @@ type HippoNetworkClient struct {
 	maxPing           int64
 
 	networkPool NetworkPool
+
+	templateBlock Block
 }
 
 // New ...
 func (c *HippoNetworkClient) New(ctx context.Context, address string, protocol string,
-	maxNeighbors int, register Register, updateTimeBase, updateTimeRand int, p2pClient P2PClientInterface) {
+	maxNeighbors int, register Register, updateTimeBase, updateTimeRand int,
+	p2pClient P2PClientInterface, templateBlock Block) {
 	c.ctx = ctx
 	c.syncCtx, c.syncCancel = context.WithCancel(ctx)
 	c.address, c.protocol = address, protocol
@@ -138,7 +144,9 @@ func (c *HippoNetworkClient) New(ctx context.Context, address string, protocol s
 	c.p2pClient = p2pClient
 	c.maxPing = 1e4 // 10 seconds
 
-	c.networkPool.New(c.ctx, c.p2pClient, protocol)
+	c.templateBlock = templateBlock
+
+	c.networkPool.New(c.ctx, c.p2pClient, protocol, templateBlock)
 }
 
 // SetMaxPing ...
@@ -272,6 +280,89 @@ func (c *HippoNetworkClient) BroadcastBlock(address string, block BroadcastBlock
 	case <-ctx.Done():
 		logger.Debug("netowrk client: broadcast block timeout")
 		return errors.New("netowrk client: broadcast block timeout")
+	}
+}
+
+// QueryLevel ...
+func (c *HippoNetworkClient) QueryLevel(address string, level0,
+	level1 int, reply *[]string) error {
+	var p2pClient P2PClientInterface
+	var err error
+	var ok bool
+	logger.Debug("netowrk client: query level", address, level0, level1)
+
+	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
+	done := make(chan error, 1)
+
+	defer cancel()
+	ok = false
+
+	go func(done chan error) {
+		p2pClient = c.networkPool.Get(address)
+		if p2pClient != nil {
+			err = p2pClient.QueryLevel(level0, level1, reply)
+			if err == nil {
+				ok = true
+				done <- nil
+				return
+			}
+		}
+		logger.Error(err)
+		done <- nil
+		return
+	}(done)
+
+	select {
+	case <-done:
+		logger.Debug("netowrk client: query level finished.")
+		if ok {
+			return nil
+		}
+		return err
+	case <-ctx.Done():
+		logger.Debug("netowrk client: query level timeout")
+		return errors.New("netowrk client: query level timeout")
+	}
+}
+
+// QueryByHash ...
+func (c *HippoNetworkClient) QueryByHash(address string, hashValue string) (block Block) {
+	var p2pClient P2PClientInterface
+	var err error
+	var ok bool
+	logger.Debug("netowrk client: query by hash", address, hashValue)
+
+	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
+	done := make(chan error, 1)
+
+	defer cancel()
+	ok = false
+
+	go func(done chan error) {
+		p2pClient = c.networkPool.Get(address)
+		if p2pClient != nil {
+			block = p2pClient.QueryByHash(hashValue)
+			if block != nil {
+				ok = true
+				done <- nil
+				return
+			}
+		}
+		logger.Error(err)
+		done <- nil
+		return
+	}(done)
+
+	select {
+	case <-done:
+		logger.Debug("netowrk client: query level finished.")
+		if ok {
+			return block
+		}
+		return nil
+	case <-ctx.Done():
+		logger.Debug("netowrk client: query level timeout")
+		return nil
 	}
 }
 

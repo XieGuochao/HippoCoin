@@ -21,7 +21,8 @@ type P2PServiceInterface interface {
 	setBlockTemplate(block Block)
 	Ping(request string, reply *string) error
 	BroadcastBlock(sendBlockByte []byte, reply *string) error
-	QueryLevel(q QueryLevelStruct, reply *[]byte) error
+	QueryLevel(q QueryLevelStruct, reply *[]string) error
+	QueryByHash(h string, blockBytes *[]byte) error
 	serve()
 }
 
@@ -63,6 +64,7 @@ func (s *P2PServer) serve() {
 				return
 			default:
 				conn, err := s.listener.Accept()
+				logger.Info("p2p server receive conn:", err)
 				if err != nil {
 					logger.Error("p2p server accept error:", err)
 				} else {
@@ -134,11 +136,22 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 }
 
 // QueryLevel ...
-func (s *P2PServer) QueryLevel(q QueryLevelStruct, reply *[]byte) error {
-	var blocks []Block
+func (s *P2PServer) QueryLevel(q QueryLevelStruct, reply *[]string) error {
+	var hashes []string
 	if s.storage != nil {
-		blocks = s.storage.GetBlocksLevel(q.Level0, q.Level1)
+		hashes = s.storage.GetBlocksLevelHash(q.Level0, q.Level1)
 	}
-	*reply = EncodeBlocks(blocks)
+	*reply = hashes
+	return nil
+}
+
+// QueryByHash ...
+func (s *P2PServer) QueryByHash(h string, blockBytes *[]byte) error {
+	if s.storage != nil {
+		block, has := s.storage.Get(h)
+		if has {
+			*blockBytes = block.Encode()
+		}
+	}
 	return nil
 }

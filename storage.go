@@ -19,6 +19,7 @@ type Storage interface {
 	TryUpdateMaxLevel(level int) int
 	GetTopBlock() Block
 	GetBlocksLevel(level0, level1 int) []Block
+	GetBlocksLevelHash(level0, level1 int) []string
 
 	Count() int
 	AllHashes() []string
@@ -277,6 +278,26 @@ func (storage *HippoStorage) GetBlocksLevel(level0, level1 int) (blocks []Block)
 		}
 		for block := range levelBlocks {
 			blocks = append(blocks, block)
+		}
+	}
+	return
+}
+
+// GetBlocksLevelHash ...
+func (storage *HippoStorage) GetBlocksLevelHash(level0, level1 int) (haashes []string) {
+	haashes = make([]string, 0)
+	if level1 < level0 || level0 > storage.MaxLevel() {
+		return
+	}
+	storage.LockLevel()
+	defer storage.UnlockLevel()
+	for level := level0; level <= level1; level++ {
+		levelBlocks, has := storage.levels[level]
+		if !has {
+			continue
+		}
+		for block := range levelBlocks {
+			haashes = append(haashes, block.Hash())
 		}
 	}
 	return
