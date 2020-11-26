@@ -158,3 +158,18 @@ func TestSyncAddressesN(t *testing.T) {
 		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
 	}
 }
+
+func TestStartSyncBlocks(t *testing.T) {
+	initTest(1)
+	logger.Info("test sync blocks ==============================")
+
+	initPrenetwork()
+	initNetwork()
+	testNetworkClient.SyncNeighbors()
+	testNetworkClient.StartSyncBlocks(testStorage)
+
+	for {
+		time.Sleep(time.Second * time.Duration(15))
+		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
+	}
+}

@@ -93,6 +93,8 @@ func (l *HippoNetworkListener) Listener() net.Listener {
 // 2. SyncNeighbors()
 // 3. StopSyncNeighbors()
 // 4. CountNeighbors()  UpdateNeighbors()  Ping(address)
+// 5. StartSyncBlocks(storage)
+// 6. StopSyncBlocks()
 type NetworkClient interface {
 	New(ctx context.Context, address string, protocol string, maxNeighbors int,
 		register Register, updateTimeBase, updateTimeRand int, p2pClient P2PClientInterface,
@@ -113,21 +115,28 @@ type NetworkClient interface {
 	QueryHashes(address string, hashes []string) (blocks []Block)
 	SyncBlocks(address string, storage Storage)
 	SyncAddressesN(n int, storage Storage)
+
+	SetSyncBlockCount(count int)
+	StartSyncBlocks(storage Storage)
+	StopSyncBlocks()
 }
 
 // HippoNetworkClient ...
 type HippoNetworkClient struct {
-	ctx               context.Context
-	address, protocol string
-	neighbors         sync.Map
-	maxNeighbors      int
-	register          Register
-	syncCtx           context.Context
-	syncCancel        context.CancelFunc
-	updateTimeBase    int
-	updateTimeRand    int
-	p2pClient         P2PClientInterface
-	maxPing           int64
+	ctx                 context.Context
+	address, protocol   string
+	neighbors           sync.Map
+	maxNeighbors        int
+	register            Register
+	syncNeighborsCtx    context.Context
+	syncNeighborsCancel context.CancelFunc
+	syncBlockCtx        context.Context
+	syncBlockCancel     context.CancelFunc
+	syncBlockCount      int
+	updateTimeBase      int
+	updateTimeRand      int
+	p2pClient           P2PClientInterface
+	maxPing             int64
 
 	networkPool NetworkPool
 
@@ -139,13 +148,14 @@ func (c *HippoNetworkClient) New(ctx context.Context, address string, protocol s
 	maxNeighbors int, register Register, updateTimeBase, updateTimeRand int,
 	p2pClient P2PClientInterface, templateBlock Block) {
 	c.ctx = ctx
-	c.syncCtx, c.syncCancel = context.WithCancel(ctx)
+	c.syncNeighborsCtx, c.syncNeighborsCancel = context.WithCancel(ctx)
 	c.address, c.protocol = address, protocol
 	c.register = register
 	c.maxNeighbors = maxNeighbors
 	c.updateTimeBase, c.updateTimeRand = updateTimeBase, updateTimeRand
 	c.p2pClient = p2pClient
 	c.maxPing = 1e4 // 10 seconds
+	c.syncBlockCount = 5
 
 	c.templateBlock = templateBlock
 
@@ -451,6 +461,30 @@ func (c *HippoNetworkClient) SyncAddressesN(n int, storage Storage) {
 	}
 }
 
+// SetSyncBlockCount ...
+func (c *HippoNetworkClient) SetSyncBlockCount(count int) { c.syncBlockCount = count }
+
+// StartSyncBlocks ...
+func (c *HippoNetworkClient) StartSyncBlocks(storage Storage) {
+	c.syncBlockCtx, c.syncBlockCancel = context.WithCancel(c.ctx)
+
+	go func() {
+		for {
+			select {
+			case <-c.syncBlockCtx.Done():
+				logger.Info("stop sync blocks")
+				return
+			default:
+				go c.SyncAddressesN(c.syncBlockCount, storage)
+				time.Sleep(time.Second * time.Duration(10))
+			}
+		}
+	}()
+}
+
+// StopSyncBlocks ...
+func (c *HippoNetworkClient) StopSyncBlocks() { c.syncBlockCancel() }
+
 // NeighborPing ...
 type NeighborPing struct {
 	Address string
@@ -497,7 +531,7 @@ func (c *HippoNetworkClient) SyncNeighbors() {
 	go func() {
 		for {
 			select {
-			case <-c.syncCtx.Done():
+			case <-c.syncNeighborsCtx.Done():
 				logger.Info("stop sync neighbors")
 				return
 			default:
@@ -518,7 +552,7 @@ func (c *HippoNetworkClient) SyncNeighbors() {
 
 // StopSyncNeighbors ...
 func (c *HippoNetworkClient) StopSyncNeighbors() {
-	c.syncCancel()
+	c.syncNeighborsCancel()
 }
 
 // GetAddress ...
