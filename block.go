@@ -240,10 +240,10 @@ func (b *HippoBlock) GetBalanceChange() map[string]int64 {
 }
 
 // CreateGenesisBlock ...
-func CreateGenesisBlock(numBytes uint, hashFunction HashFunction,
+func CreateGenesisBlock(hashFunction HashFunction,
 	curve elliptic.Curve, key Key) HippoBlock {
 	var block HippoBlock
-	block.New([]byte{}, numBytes, hashFunction, 0, nil, curve)
+	block.New([]byte{}, 232, hashFunction, 0, nil, curve)
 	block.Sign(key)
 	return block
 }

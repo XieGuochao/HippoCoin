@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/elliptic"
 	"sync"
+	"time"
 
 	registerlib "github.com/XieGuochao/HippoCoinRegister/lib"
 )
@@ -65,7 +66,7 @@ func initTest(number int) {
 }
 
 func initBalance() {
-	testBalance := new(HippoBalance)
+	testBalance = new(HippoBalance)
 	testBalance.New()
 }
 
@@ -153,4 +154,14 @@ func initNetwork() {
 func initNetworkRun() {
 	testBroadcastQueue.Run()
 	testMiningQueue.Run(&testWaitGroup)
+}
+
+func watchStorageBalance(storage Storage, balance Balance,
+	seconds int64) {
+	for {
+		time.Sleep(time.Second * time.Duration(seconds))
+		logger.Info("block hashes: [", storage.MaxLevel(), "]",
+			storage.AllHashesInLevel())
+		logger.Info("balance:", balance.AllBalance())
+	}
 }

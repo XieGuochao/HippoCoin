@@ -18,7 +18,7 @@ type MiningFunction interface {
 type singleMiningFunction struct {
 	// block        HippoBlock
 	hashFunction HashFunction
-	callback     miningCallback
+	callback     MiningCallback
 	seed         int64
 }
 

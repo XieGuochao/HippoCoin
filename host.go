@@ -5,74 +5,235 @@ import (
 	"crypto/elliptic"
 	"crypto/sha256"
 	"sync"
-	"time"
+
+	registerlib "github.com/XieGuochao/HippoCoinRegister/lib"
 )
 
 // Host ...
 type Host interface {
-	New()
+	New(debug bool, curve elliptic.Curve, localMode bool)
+
 	Run()
+	InitLogger(debug bool)
+	InitLocals(
+		ctx context.Context,
+		hashFunction HashFunction,
+		miningFunction MiningFunction,
+		miningThreads int,
+		p2pClientTemplate P2PClientInterface,
+		broadcastQueueLen uint,
+
+		miningCallbackFunction MiningCallback,
+
+		miningCapacity int,
+		miningTTL int64,
+		protocol string,
+	)
+	InitNetwork(
+		blockTemplate Block,
+		maxNeighbors int,
+		updateTimeBase int,
+		updateTimeRand int,
+
+		registerAddress string,
+		registerProtocol string,
+	)
+
 	Close()
 }
 
 // HippoHost ...
 type HippoHost struct {
-	// mining
-	transactionPool    TransactionPool
-	mining             Mining
-	miningQueue        *MiningQueue
-	miningCallbackFunc miningCallback
-	miningFunction     MiningFunction
-	hashFunc           HashFunction
+	localMode bool
 
-	// store
-	balance Balance
-
-	// key
-	curve elliptic.Curve
+	// key and curve
 	key   Key
+	curve elliptic.Curve
 
-	// context
+	hashFunction   HashFunction
+	miningFunction MiningFunction
+	miningCallback MiningCallback
+
 	ctx    context.Context
 	cancel context.CancelFunc
+
+	register        Register
+	networkClient   NetworkClient
+	networkListener NetworkListener
+
+	IP                string
+	port              int
+	address           string
+	protocol          string
+	P2PClientTemplate P2PClientInterface
+	P2PServer         P2PServiceInterface
+
+	registerAddress  string
+	registerProtocol string
+
+	waitGroup sync.WaitGroup
+
+	balance         Balance
+	mining          Mining
+	miningQueue     MiningQueue
+	transactionPool TransactionPool
+	storage         Storage
+	broadcastQueue  BroadcastQueue
+	blockTemplate   Block
 }
 
-// New ...
-func (host *HippoHost) New() {
-
-	// const
-	host.curve = elliptic.P256()
-	host.key.New(elliptic.P224())
+// InitKey ...
+func (host *HippoHost) InitKey(curve elliptic.Curve) {
+	host.curve = curve
+	host.key.New(curve)
 	host.key.GenerateKey()
-	host.hashFunc = hash
+	logger.Info("key:", host.key.ToAddress())
+}
+
+// InitLogger ...
+func (host *HippoHost) InitLogger(debug bool) {
+	initLogger()
+	if debug {
+		logger.WithDebug()
+	} else {
+		logger.WithoutDebug()
+	}
+	logger.WithColor()
+}
+
+// InitLocals ...
+func (host *HippoHost) InitLocals(
+	ctx context.Context,
+	hashFunction HashFunction,
+	miningFunction MiningFunction,
+	miningThreads int,
+	p2pClientTemplate P2PClientInterface,
+	broadcastQueueLen uint,
+
+	miningCallbackFunction MiningCallback,
+
+	miningCapacity int,
+	miningTTL int64,
+	protocol string,
+
+) {
+	host.ctx, host.cancel = context.WithCancel(ctx)
+	host.hashFunction = hashFunction
+	host.miningFunction = miningFunction
+	host.miningFunction.New(host.hashFunction, miningThreads)
+	host.miningCallback = miningCallbackFunction
+	host.protocol = protocol
 
 	host.balance = new(HippoBalance)
 	host.balance.New()
 
-	host.ctx, host.cancel = context.WithCancel(context.Background())
+	host.storage = new(HippoStorage)
+	host.storage.New()
+	host.storage.SetBalance(host.balance)
 
-	host.transactionPool = new(HippoTransactionPool)
-	host.miningQueue = new(MiningQueue)
-	host.miningQueue.New(host.ctx, host.miningCallbackFunc, host.hashFunc,
-		host.miningFunction)
+	host.P2PClientTemplate = p2pClientTemplate
+	host.broadcastQueue = new(HippoBroadcastQueue)
+	host.broadcastQueue.New(host.ctx, host.protocol,
+		host.P2PClientTemplate, broadcastQueueLen)
 
 	host.mining = new(HippoMining)
-	host.mining.New(host.miningQueue, host.transactionPool, 1000,
-		int64(time.Hour.Seconds()), host.balance, host.key)
+	host.mining.SetBroadcastQueue(host.broadcastQueue)
+	host.mining.SetStorage(host.storage)
+
+	host.miningQueue.New(host.ctx, host.miningCallback,
+		host.hashFunction, host.miningFunction)
+	host.miningQueue.SetBroadcastQueue(host.broadcastQueue)
+	host.miningQueue.SetStorage(host.storage)
+
+	host.transactionPool = new(HippoTransactionPool)
+	host.transactionPool.New(host.balance)
+	host.mining.New(&host.miningQueue, host.transactionPool,
+		miningCapacity, miningTTL, host.balance, host.key)
+
+}
+
+// InitNetwork ...
+func (host *HippoHost) InitNetwork(
+	blockTemplate Block,
+	maxNeighbors int,
+	updateTimeBase int,
+	updateTimeRand int,
+
+	registerAddress string,
+	registerProtocol string,
+) {
+	if host.localMode {
+		host.IP = "localhost"
+	} else {
+		host.IP = registerlib.GetOutboundIP().String()
+	}
+	host.blockTemplate = blockTemplate
+	host.blockTemplate.New([]byte{}, 0, host.hashFunction,
+		0, host.balance, host.curve)
+
+	host.networkListener = new(HippoNetworkListener)
+	host.networkListener.New(host.ctx, host.IP, host.protocol)
+	host.networkListener.Listen()
+
+	logger.Info("listener: create")
+
+	host.address = host.networkListener.NetworkAddress()
+	logger.Info("listener:", host.address)
+
+	host.P2PServer = new(P2PServer)
+	host.P2PServer.new(host.ctx, host.networkListener.Listener())
+	host.P2PServer.setBroadcastQueue(host.broadcastQueue)
+	host.P2PServer.setStorage(host.storage)
+	host.P2PServer.setBlockTemplate(host.blockTemplate)
+	host.P2PServer.serve()
+
+	host.registerAddress = registerAddress
+	host.registerProtocol = registerProtocol
+	host.register = new(HippoRegister)
+	host.register.New(host.ctx, host.registerAddress, host.registerProtocol)
+
+	logger.Info("register: create")
+
+	host.networkClient = new(HippoNetworkClient)
+	host.networkClient.New(host.ctx, host.address, host.protocol,
+		maxNeighbors, host.register, updateTimeBase,
+		updateTimeRand, host.P2PClientTemplate, host.blockTemplate)
+	host.broadcastQueue.SetNetworkClient(host.networkClient)
+	logger.Info("network client: created")
 }
 
 // Run ...
+// Use `go host.Run()`
 func (host *HippoHost) Run() {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	defer host.cancel()
-	host.miningQueue.Run(&wg)
-	wg.Wait()
-	logger.Info("host has been closed.")
+	host.waitGroup.Add(1)
+	host.broadcastQueue.Run()
+	host.miningQueue.Run(&host.waitGroup)
+	host.networkClient.SyncNeighbors()
+	go host.mining.WatchSendNewBlock()
+
+	host.networkClient.StartSyncBlocks(host.storage)
+
+	genesisBlock := CreateGenesisBlock(host.hashFunction,
+		host.curve, host.key)
+	host.miningQueue.add(genesisBlock)
+
+	go watchStorageBalance(host.storage, host.balance,
+		20)
+	logger.Info("host running")
+	host.waitGroup.Wait()
+}
+
+// New ...
+func (host *HippoHost) New(debug bool, curve elliptic.Curve,
+	localMode bool) {
+	host.InitLogger(debug)
+	host.InitKey(curve)
+	host.localMode = localMode
 }
 
 // Close ...
 func (host *HippoHost) Close() {
+	logger.Info("host: closed")
 	host.cancel()
 }
 

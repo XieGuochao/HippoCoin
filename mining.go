@@ -113,9 +113,9 @@ func (m *HippoMining) WatchSendNewBlock() {
 					prevBlock.GetLevel()+1, prevBlock.GetBalance(), prevBlock.GetCurve())
 				block = m.Fetch(block)
 
-				block.Sign(testKeys[0])
+				block.Sign(m.key)
 				logger.Info("block level:", block.GetLevel())
-				testMining.Mine(block)
+				m.Mine(block)
 			}
 			// default:
 			// time.Sleep(time.Second)

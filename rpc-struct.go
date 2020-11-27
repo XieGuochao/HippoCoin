@@ -97,7 +97,7 @@ type ReceiveBlock struct {
 
 // Decode ...
 func (r *ReceiveBlock) Decode(b *BroadcastBlock) {
-	logger.Debug("decode:", string(r.Data))
+	// logger.Debug("decode:", string(r.Data))
 	var (
 		dataMap map[string]interface{}
 	)
@@ -126,7 +126,7 @@ func (r *ReceiveBlock) Decode(b *BroadcastBlock) {
 		bytes, err = json.Marshal(dataMap["Level"])
 		json.Unmarshal(bytes, &r.level)
 	}
-	logger.Debug("decode:", r.block)
+	// logger.Debug("decode:", r.block)
 	b.Block = r.block
 	b.Transactions = r.block.transactions
 	b.Addresses = r.addresses

@@ -74,7 +74,7 @@ func (l *HippoNetworkListener) Listen() {
 	var err error
 	l.listener, err = net.Listen(l.protocol, ":0")
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatal(err, l.protocol)
 	}
 	l.port = l.listener.Addr().(*net.TCPAddr).Port
 	logger.Info("create register listener:", l.NetworkAddress())

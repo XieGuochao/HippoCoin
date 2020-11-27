@@ -5,7 +5,8 @@ import (
 	"sync"
 )
 
-type miningCallback func(has bool, block Block, storage Storage, bq BroadcastQueue)
+// MiningCallback ...
+type MiningCallback func(has bool, block Block, storage Storage, bq BroadcastQueue)
 
 // MiningQueue ...
 // Steps:
@@ -23,7 +24,7 @@ type MiningQueue struct {
 	wg      *sync.WaitGroup
 
 	// functions
-	callback     miningCallback
+	callback     MiningCallback
 	hashFunction HashFunction
 	miningFunc   MiningFunction
 
@@ -42,7 +43,7 @@ type MiningQueue struct {
 }
 
 // New ...
-func (m *MiningQueue) New(parentContext context.Context, callback miningCallback,
+func (m *MiningQueue) New(parentContext context.Context, callback MiningCallback,
 	hashFunction HashFunction, miningFunc MiningFunction) {
 	m.setCallback(callback)
 	m.setMiningFunc(miningFunc)
@@ -111,7 +112,7 @@ func (m *MiningQueue) setHashFunction(f HashFunction) {
 	m.hashFunction = f
 }
 
-func (m *MiningQueue) setCallback(f miningCallback) {
+func (m *MiningQueue) setCallback(f MiningCallback) {
 	m.callback = f
 }
 
