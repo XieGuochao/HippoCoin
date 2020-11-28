@@ -98,7 +98,8 @@ func initMiningQueue() {
 func initTransactionPool() {
 	testTransactionPool = new(HippoTransactionPool)
 	testTransactionPool.New(testBalance)
-	testMining.New(&testMiningQueue, testTransactionPool, 10, 600, testBalance, testKeys[0])
+	testMining.New(&testMiningQueue, testTransactionPool, staticDifficulty,
+		30, 10, 600, testBalance, testKeys[0])
 }
 
 func initMinings() {

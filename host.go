@@ -24,6 +24,8 @@ type Host interface {
 		broadcastQueueLen uint,
 
 		miningCallbackFunction MiningCallback,
+		difficultyFunction DifficultyFunc,
+		interval int64,
 
 		miningCapacity int,
 		miningTTL int64,
@@ -80,6 +82,8 @@ type HippoHost struct {
 	storage         Storage
 	broadcastQueue  BroadcastQueue
 	blockTemplate   Block
+
+	miningInterval int64
 }
 
 // InitKey ...
@@ -111,6 +115,8 @@ func (host *HippoHost) InitLocals(
 	broadcastQueueLen uint,
 
 	miningCallbackFunction MiningCallback,
+	difficultyFunction DifficultyFunc,
+	interval int64,
 
 	miningCapacity int,
 	miningTTL int64,
@@ -123,6 +129,7 @@ func (host *HippoHost) InitLocals(
 	host.miningFunction.New(host.hashFunction, miningThreads)
 	host.miningCallback = miningCallbackFunction
 	host.protocol = protocol
+	host.miningInterval = interval
 
 	host.balance = new(HippoBalance)
 	host.balance.New()
@@ -148,7 +155,8 @@ func (host *HippoHost) InitLocals(
 	host.transactionPool = new(HippoTransactionPool)
 	host.transactionPool.New(host.balance)
 	host.mining.New(&host.miningQueue, host.transactionPool,
-		miningCapacity, miningTTL, host.balance, host.key)
+		difficultyFunction, host.miningInterval, miningCapacity, miningTTL,
+		host.balance, host.key)
 
 }
 

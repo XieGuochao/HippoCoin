@@ -43,6 +43,7 @@ type Block interface {
 	Check() bool
 	GetLevel() int
 	GetBalanceChange() map[string]int64
+	GetTimestamp() int64
 
 	Encode() []byte
 }
@@ -239,11 +240,14 @@ func (b *HippoBlock) GetBalanceChange() map[string]int64 {
 	return balanceChange
 }
 
+// GetTimestamp ...
+func (b *HippoBlock) GetTimestamp() int64 { return b.Timestamp }
+
 // CreateGenesisBlock ...
 func CreateGenesisBlock(hashFunction HashFunction,
 	curve elliptic.Curve, key Key) HippoBlock {
 	var block HippoBlock
-	block.New([]byte{}, 232, hashFunction, 0, nil, curve)
+	block.New([]byte{}, 235, hashFunction, 0, nil, curve)
 	block.Sign(key)
 	return block
 }
@@ -316,4 +320,29 @@ func DecodeBlock(bytes []byte, tempalteBlock Block) Block {
 
 	// return b
 	return b
+}
+
+// DifficultyFunc ...
+type DifficultyFunc func(block Block, storage Storage,
+	baseInterval int64) uint
+
+func basicDifficulty(block Block, storage Storage,
+	baseInterval int64) uint {
+	lastInterval := storage.GetLastInterval()
+	logger.Debug("difficulty: lastinterval", lastInterval)
+	if lastInterval == -1 {
+		return block.GetNumBytes()
+	}
+	if lastInterval > baseInterval/2 && block.GetNumBytes() < 255 {
+		return block.GetNumBytes() + 1
+	}
+	if lastInterval < baseInterval*2 && block.GetNumBytes() > 0 {
+		return block.GetNumBytes() - 1
+	}
+	return block.GetNumBytes()
+}
+
+func staticDifficulty(block Block, storage Storage,
+	baseInterval int64) uint {
+	return block.GetNumBytes()
 }

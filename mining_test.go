@@ -40,7 +40,8 @@ func TestMiningOK(t *testing.T) {
 
 	transactionPool := new(HippoTransactionPool)
 	transactionPool.New(balance)
-	mining.New(miningQueue, transactionPool, 100, 100, balance, testKeys[0])
+	mining.New(miningQueue, transactionPool, staticDifficulty,
+		30, 100, 100, balance, testKeys[0])
 
 	block = mining.Fetch(block)
 	mining.Sign(block)
@@ -76,7 +77,8 @@ func TestMiningStop(t *testing.T) {
 
 	transactionPool := new(HippoTransactionPool)
 	transactionPool.New(balance)
-	mining.New(miningQueue, transactionPool, 100, 100, balance, testKeys[0])
+	mining.New(miningQueue, transactionPool, staticDifficulty,
+		30, 100, 100, balance, testKeys[0])
 
 	block = mining.Fetch(block)
 	mining.Sign(block)
@@ -122,7 +124,8 @@ func TestMiningMultipleOK(t *testing.T) {
 
 	transactionPool := new(HippoTransactionPool)
 	transactionPool.New(balance)
-	mining.New(miningQueue, transactionPool, 100, 100, balance, testKeys[0])
+	mining.New(miningQueue, transactionPool, staticDifficulty,
+		30, 100, 100, balance, testKeys[0])
 
 	block = mining.Fetch(block)
 	mining.Sign(block)

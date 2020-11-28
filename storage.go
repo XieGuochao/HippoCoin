@@ -23,6 +23,8 @@ type Storage interface {
 	GetBlocksLevelHash(level0, level1 int) []string
 	FilterNewHashes(hash []string) (result []string)
 
+	GetLastInterval() int64
+
 	Count() int
 	AllHashes() []string
 	AllHashesInLevel() map[int][]string
@@ -346,6 +348,23 @@ func (storage *HippoStorage) GetMainChain() []Block {
 		}
 	}
 	return blocks
+}
+
+// GetLastInterval ...
+// Return -1 if not available.
+func (storage *HippoStorage) GetLastInterval() int64 {
+	topBlock := storage.GetTopBlock()
+	if topBlock == nil {
+		return -1
+	}
+	if topBlock.GetLevel() == 0 {
+		return -1
+	}
+	prevBlock, has := storage.Get(topBlock.ParentHash())
+	if !has {
+		return -1
+	}
+	return topBlock.GetTimestamp() - prevBlock.GetTimestamp()
 }
 
 // FilterNewHashes ...

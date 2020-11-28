@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/elliptic"
 	"os"
+	"strconv"
 
 	"github.com/withmandala/go-log"
 )
@@ -18,10 +19,19 @@ func initLogger() {
 
 func main() {
 	var (
-		host   Host
-		ctx    context.Context
-		cancel context.CancelFunc
+		host           Host
+		ctx            context.Context
+		cancel         context.CancelFunc
+		miningInterval int64
+		msi            int
+		err            error
 	)
+	ms := os.Args[1]
+	msi, err = strconv.Atoi(ms)
+	if err != nil {
+		msi = 30
+	}
+	miningInterval = int64(msi)
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 	host = new(HippoHost)
@@ -30,7 +40,7 @@ func main() {
 
 	host.InitLocals(ctx, hash, new(singleMiningFunction), 1,
 		new(P2PClient), 10, miningCallbackBroadcastSave,
-		5, 600, "tcp")
+		basicDifficulty, miningInterval, 5, 600, "tcp")
 	host.InitNetwork(new(HippoBlock), 5, 4, 1,
 		"localhost:9325", "tcp")
 	host.Run()

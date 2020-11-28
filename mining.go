@@ -19,7 +19,9 @@ import (
 // 9. mining.Cancel()
 // 10. mining.Stop()
 type Mining interface {
-	New(q *MiningQueue, tp TransactionPool, capacity int,
+	New(q *MiningQueue, tp TransactionPool,
+		difficultyFunction DifficultyFunc,
+		miningInterval int64, capacity int,
 		TTL int64, balance Balance, key Key)
 	SetStorage(storage Storage)
 	SetBroadcastQueue(bq BroadcastQueue)
@@ -40,9 +42,11 @@ type HippoMining struct {
 	storage         Storage
 	broadcastQueue  BroadcastQueue
 
-	minedHash     sync.Map
-	blockCapacity int
-	TTL           int64
+	minedHash          sync.Map
+	blockCapacity      int
+	TTL                int64
+	difficultyFunction DifficultyFunc
+	miningInterval     int64
 
 	balance Balance
 	// miner
@@ -50,7 +54,9 @@ type HippoMining struct {
 }
 
 // New ...
-func (m *HippoMining) New(q *MiningQueue, tp TransactionPool, capacity int,
+func (m *HippoMining) New(q *MiningQueue, tp TransactionPool,
+	difficultyFunction DifficultyFunc,
+	miningInterval int64, capacity int,
 	TTL int64, balance Balance, key Key) {
 	m.queue = q
 	m.blockCapacity = capacity
@@ -58,6 +64,8 @@ func (m *HippoMining) New(q *MiningQueue, tp TransactionPool, capacity int,
 	m.TTL = TTL
 	m.balance = balance
 	m.key = key
+	m.difficultyFunction = difficultyFunction
+	m.miningInterval = miningInterval
 }
 
 // SetStorage ...
@@ -109,7 +117,9 @@ func (m *HippoMining) WatchSendNewBlock() {
 				var block Block
 				block = new(HippoBlock)
 				prevBlock := m.storage.GetTopBlock()
-				block.New(prevBlock.HashBytes(), prevBlock.GetNumBytes(), prevBlock.GetHashFunction(),
+				newDifficulty := m.difficultyFunction(prevBlock, m.storage,
+					m.miningInterval)
+				block.New(prevBlock.HashBytes(), newDifficulty, prevBlock.GetHashFunction(),
 					prevBlock.GetLevel()+1, prevBlock.GetBalance(), prevBlock.GetCurve())
 				block = m.Fetch(block)
 
@@ -117,8 +127,8 @@ func (m *HippoMining) WatchSendNewBlock() {
 				logger.Info("block level:", block.GetLevel())
 				m.Mine(block)
 			}
-			// default:
-			// time.Sleep(time.Second)
+		default:
+			time.Sleep(time.Second)
 		}
 
 	}
