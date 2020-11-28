@@ -215,7 +215,7 @@ func (host *HippoHost) Run() {
 
 	genesisBlock := CreateGenesisBlock(host.hashFunction,
 		host.curve, host.key)
-	host.miningQueue.add(genesisBlock)
+	host.mining.Mine(&genesisBlock)
 
 	go watchStorageBalance(host.storage, host.balance,
 		20)

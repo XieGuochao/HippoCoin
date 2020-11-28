@@ -98,6 +98,7 @@ func (m *MiningQueue) main() {
 			m.callback(result, &newBlock, m.storage, m.broadcastQueue)
 			logger.Info("mining continue to mine:")
 			m.miningStatus <- true
+			logger.Info("mining queue: trigger mining status")
 		case <-m.queueContext.Done():
 			logger.Debug("mining queue closed.")
 			return

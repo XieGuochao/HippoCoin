@@ -120,28 +120,6 @@ func (storage *HippoStorage) Add(block Block) bool {
 		storage.miningCancel = nil
 	}
 
-	// Update balance from genesis
-	balance := storage.balance
-	if balance != nil {
-		balance := storage.balance
-		balance.Lock()
-		balance.New()
-		mainChain := storage.GetMainChain()
-		if mainChain != nil {
-			for _, b := range mainChain {
-				balanceChange := b.GetBalanceChange()
-				for address, value := range balanceChange {
-					balance.Update(address, value)
-				}
-			}
-		} else {
-			logger.Error("storage: cannot update balance")
-		}
-		balance.Unlock()
-	} else {
-		logger.Error("storage: no balance")
-	}
-
 	storage.LockLevel()
 	l, has := storage.levels[block.GetLevel()]
 	if !has {
@@ -166,6 +144,31 @@ func (storage *HippoStorage) Add(block Block) bool {
 		storage.UpdateVerified(h)
 		storage.UpdateChild(h)
 	}
+
+	// Update balance from genesis
+	balance := storage.balance
+	if balance != nil {
+		balance := storage.balance
+		balance.Lock()
+		balance.New()
+		mainChain := storage.GetMainChain()
+		logger.Debug("main chain:", mainChain)
+		if mainChain != nil {
+			for _, b := range mainChain {
+				balanceChange := b.GetBalanceChange()
+				for address, value := range balanceChange {
+					balance.UpdateUnsafe(address, value)
+				}
+			}
+		} else {
+			logger.Error("storage: cannot update balance")
+		}
+		balance.Unlock()
+	} else {
+		logger.Error("storage: no balance")
+	}
+	logger.Debug("update balance end.")
+	logger.Debug("balance:", storage.balance.AllBalance())
 
 	return false
 }
@@ -334,10 +337,12 @@ func (storage *HippoStorage) GetMainChain() []Block {
 
 	for i := level; i >= 0; i-- {
 		blocks[i] = block
-		block, has = storage.Get(block.ParentHash())
-		if !has {
-			logger.Error("storage: get main chain failed:", block.ParentHash())
-			return nil
+		if i > 0 {
+			block, has = storage.Get(block.ParentHash())
+			if !has {
+				logger.Error("storage: get main chain failed:", block.ParentHash())
+				return nil
+			}
 		}
 	}
 	return blocks

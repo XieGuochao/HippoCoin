@@ -94,7 +94,7 @@ func (m *HippoMining) WatchSendNewBlock() {
 
 		case <-m.queue.miningStatus:
 			// logger.Info("channel length:", len(m.channel))
-			logger.Error("mining queue chenged")
+			logger.Info("mining queue chenged")
 
 			if len(m.queue.channel) == 0 {
 				if m.storage == nil {

@@ -31,7 +31,7 @@ func main() {
 	host.InitLocals(ctx, hash, new(singleMiningFunction), 1,
 		new(P2PClient), 10, miningCallbackBroadcastSave,
 		5, 600, "tcp")
-	host.InitNetwork(new(HippoBlock), 5, 5, 3,
+	host.InitNetwork(new(HippoBlock), 5, 4, 1,
 		"localhost:9325", "tcp")
 	host.Run()
 }
