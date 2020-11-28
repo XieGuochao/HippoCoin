@@ -6,16 +6,10 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/withmandala/go-log"
+	. "github.com/XieGuochao/HippoCoin/host"
 )
 
 var version = "1.0"
-
-func initLogger() {
-	logger = log.New(os.Stdout)
-	logger.WithDebug()
-	logger.WithColor()
-}
 
 func main() {
 	var (
@@ -38,9 +32,9 @@ func main() {
 	host.InitLogger(true)
 	host.New(true, elliptic.P224(), true)
 
-	host.InitLocals(ctx, hash, new(singleMiningFunction), 1,
-		new(P2PClient), 10, miningCallbackBroadcastSave,
-		basicDifficulty, miningInterval, 5, 600, "tcp")
+	host.InitLocals(ctx, Hash, new(SingleMiningFunction), 1,
+		new(P2PClient), 10, MiningCallbackBroadcastSave,
+		BasicDifficulty, miningInterval, 5, 600, "tcp")
 	host.InitNetwork(new(HippoBlock), 5, 4, 1,
 		"localhost:9325", "tcp")
 	host.Run()
