@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"crypto/elliptic"
+
+	"github.com/withmandala/go-log"
+
 	"os"
 	"strconv"
 
@@ -10,6 +13,14 @@ import (
 )
 
 var version = "1.0"
+
+var logger *log.Logger
+
+func initLogger() {
+	logger = log.New(os.Stdout)
+	logger.WithDebug()
+	logger.WithColor()
+}
 
 func main() {
 	var (
