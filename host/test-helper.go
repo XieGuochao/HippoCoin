@@ -57,7 +57,7 @@ func initKeys(number int) {
 func initTest(number int) {
 	initLogger("")
 	debugLogger.WithDebug()
-	debugLogger.WithColor()
+	debugLogger.WithoutColor()
 	initKeys(number)
 	testMiningFunction = new(SingleMiningFunction)
 	testBalance = new(HippoBalance)

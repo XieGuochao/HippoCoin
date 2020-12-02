@@ -30,7 +30,7 @@ func initLogger(debugPath string) {
 	}
 
 	debugLogger.WithDebug()
-	debugLogger.WithColor()
+	debugLogger.WithoutColor()
 
 	infoLogger = log.New(os.Stdout)
 	infoLogger.WithoutDebug()
