@@ -1,5 +1,38 @@
 package host
 
-import "github.com/withmandala/go-log"
+import (
+	"fmt"
+	"os"
 
-var logger *log.Logger
+	"github.com/withmandala/go-log"
+)
+
+var (
+	debugLogger *log.Logger
+	debugFile   *os.File
+	infoLogger  *log.Logger
+)
+
+func initLogger(debugPath string) {
+	var err error
+	fmt.Println("debug path:", debugFile)
+
+	if debugPath == "" {
+		debugLogger = log.New(os.Stdout)
+	} else {
+		debugFile, err = os.Create(debugPath)
+		if err != nil {
+			fmt.Errorf("error: %s", err)
+			return
+		}
+		fmt.Println("create debug file:", debugFile)
+		debugLogger = log.New(debugFile)
+	}
+
+	debugLogger.WithDebug()
+	debugLogger.WithColor()
+
+	infoLogger = log.New(os.Stdout)
+	infoLogger.WithoutDebug()
+	infoLogger.WithColor()
+}

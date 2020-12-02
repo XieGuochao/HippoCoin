@@ -74,10 +74,10 @@ func (l *HippoNetworkListener) Listen() {
 	var err error
 	l.listener, err = net.Listen(l.protocol, ":0")
 	if err != nil {
-		logger.Fatal(err, l.protocol)
+		infoLogger.Fatal(err, l.protocol)
 	}
 	l.port = l.listener.Addr().(*net.TCPAddr).Port
-	logger.Info("create register listener:", l.NetworkAddress())
+	infoLogger.Debug("create register listener:", l.NetworkAddress())
 }
 
 // Listener ...
@@ -183,13 +183,13 @@ func (c *HippoNetworkClient) UpdateNeighbors() {
 		Address: c.address,
 	}, &reply)
 	if err != nil {
-		logger.Error("update neighbor error:", err)
+		infoLogger.Error("update neighbor error:", err)
 		return
 	}
 
 	var neighbors []string
 	json.Unmarshal(reply, &neighbors)
-	logger.Info("update neighbor:", neighbors)
+	infoLogger.Debug("update neighbor:", neighbors)
 	for _, n := range neighbors {
 		c.Ping(n)
 	}
@@ -209,7 +209,7 @@ func (c *HippoNetworkClient) TryUpdateNeighbors() {
 func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 	var p2pClient P2PClientInterface
 	var err error
-	logger.Debug("ping", address)
+	debugLogger.Debug("ping", address)
 
 	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
 	done := make(chan error, 1)
@@ -231,7 +231,7 @@ func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 				return
 			}
 		}
-		logger.Error(err)
+		infoLogger.Error(err)
 		c.networkPool.Update(address)
 		done <- nil
 		return
@@ -239,12 +239,12 @@ func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 
 	select {
 	case <-done:
-		logger.Debug("ping finished.")
+		debugLogger.Debug("ping finished.")
 	case <-ctx.Done():
-		logger.Debug("ping timeout")
+		debugLogger.Debug("ping timeout")
 	}
 
-	// logger.Debug("ping done", address)
+	// debugLogger.Debug("ping done", address)
 
 	if ok {
 		c.neighbors.Store(address, t)
@@ -260,7 +260,7 @@ func (c *HippoNetworkClient) BroadcastBlock(address string, block BroadcastBlock
 	var p2pClient P2PClientInterface
 	var err error
 	var ok bool
-	logger.Debug("netowrk client: broadcast block", address)
+	debugLogger.Debug("netowrk client: broadcast block", address)
 
 	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
 	done := make(chan error, 1)
@@ -278,20 +278,20 @@ func (c *HippoNetworkClient) BroadcastBlock(address string, block BroadcastBlock
 				return
 			}
 		}
-		logger.Error(err)
+		infoLogger.Error(err)
 		done <- nil
 		return
 	}(done)
 
 	select {
 	case <-done:
-		logger.Debug("netowrk client: broadcast block finished.")
+		debugLogger.Debug("netowrk client: broadcast block finished.")
 		if ok {
 			return nil
 		}
 		return err
 	case <-ctx.Done():
-		logger.Debug("netowrk client: broadcast block timeout")
+		debugLogger.Debug("netowrk client: broadcast block timeout")
 		return errors.New("netowrk client: broadcast block timeout")
 	}
 }
@@ -302,7 +302,7 @@ func (c *HippoNetworkClient) QueryLevel(address string, level0,
 	var p2pClient P2PClientInterface
 	var err error
 	var ok bool
-	logger.Debug("netowrk client: query level", address, level0, level1)
+	debugLogger.Debug("netowrk client: query level", address, level0, level1)
 
 	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
 	done := make(chan error, 1)
@@ -320,20 +320,20 @@ func (c *HippoNetworkClient) QueryLevel(address string, level0,
 				return
 			}
 		}
-		logger.Error(err)
+		infoLogger.Error(err)
 		done <- nil
 		return
 	}(done)
 
 	select {
 	case <-done:
-		logger.Debug("netowrk client: query level finished.")
+		debugLogger.Debug("netowrk client: query level finished.")
 		if ok {
 			return nil
 		}
 		return err
 	case <-ctx.Done():
-		logger.Debug("netowrk client: query level timeout")
+		debugLogger.Debug("netowrk client: query level timeout")
 		return errors.New("netowrk client: query level timeout")
 	}
 }
@@ -343,7 +343,7 @@ func (c *HippoNetworkClient) QueryByHash(address string, hashValue string) (bloc
 	var p2pClient P2PClientInterface
 	var err error
 	var ok bool
-	logger.Debug("netowrk client: query by hash", address, hashValue)
+	debugLogger.Debug("netowrk client: query by hash", address, hashValue)
 
 	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
 	done := make(chan error, 1)
@@ -361,20 +361,20 @@ func (c *HippoNetworkClient) QueryByHash(address string, hashValue string) (bloc
 				return
 			}
 		}
-		logger.Error(err)
+		infoLogger.Error(err)
 		done <- nil
 		return
 	}(done)
 
 	select {
 	case <-done:
-		logger.Debug("netowrk client: query by hash finished.")
+		debugLogger.Debug("netowrk client: query by hash finished.")
 		if ok {
 			return block
 		}
 		return nil
 	case <-ctx.Done():
-		logger.Debug("netowrk client: query by hash timeout")
+		debugLogger.Debug("netowrk client: query by hash timeout")
 		return nil
 	}
 }
@@ -384,7 +384,7 @@ func (c *HippoNetworkClient) QueryHashes(address string, hashes []string) (block
 	var p2pClient P2PClientInterface
 	var err error
 	var ok bool
-	logger.Debug("netowrk client: query hashes", address, hashes)
+	debugLogger.Debug("netowrk client: query hashes", address, hashes)
 
 	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing*5))
 	done := make(chan error, 1)
@@ -402,20 +402,20 @@ func (c *HippoNetworkClient) QueryHashes(address string, hashes []string) (block
 				return
 			}
 		}
-		logger.Error(err)
+		infoLogger.Error(err)
 		done <- nil
 		return
 	}(done)
 
 	select {
 	case <-done:
-		logger.Debug("netowrk client: query hashes finished.")
+		debugLogger.Debug("netowrk client: query hashes finished.")
 		if ok {
 			return blocks
 		}
 		return nil
 	case <-ctx.Done():
-		logger.Debug("netowrk client: query hashes timeout")
+		debugLogger.Debug("netowrk client: query hashes timeout")
 		return nil
 	}
 }
@@ -428,20 +428,20 @@ func (c *HippoNetworkClient) SyncBlocks(address string, storage Storage) {
 	var err error
 	var newBlocks []Block
 	for {
-		logger.Infof("sync blocks %s %d-%d", address, level0, level1)
+		infoLogger.Infof("sync blocks %s %d-%d", address, level0, level1)
 		err = c.QueryLevel(address, level0, level1, &hashes)
 		if err != nil {
-			logger.Error("sync block error:", err)
+			infoLogger.Error("sync block error:", err)
 			return
 		}
 		hashes = storage.FilterNewHashes(hashes)
 		if len(hashes) == 0 {
-			logger.Infof("syncBlocks %s done", address)
+			infoLogger.Infof("syncBlocks %s done", address)
 			break
 		}
 		newBlocks = c.QueryHashes(address, hashes)
 		if len(newBlocks) == 0 {
-			logger.Infof("syncBlocks %s done", address)
+			infoLogger.Infof("syncBlocks %s done", address)
 			break
 		}
 		storage.AddBlocks(newBlocks)
@@ -472,7 +472,7 @@ func (c *HippoNetworkClient) StartSyncBlocks(storage Storage) {
 		for {
 			select {
 			case <-c.syncBlockCtx.Done():
-				logger.Info("stop sync blocks")
+				infoLogger.Debug("stop sync blocks")
 				return
 			default:
 				go c.SyncAddressesN(c.syncBlockCount, storage)
@@ -502,7 +502,7 @@ func (c *HippoNetworkClient) EvictNeighbors() {
 		})
 		return true
 	})
-	logger.Debug(neighbors)
+	debugLogger.Debug(neighbors)
 	if len(neighbors) < c.maxNeighbors {
 		return
 	}
@@ -532,22 +532,22 @@ func (c *HippoNetworkClient) SyncNeighbors() {
 		for {
 			select {
 			case <-c.syncNeighborsCtx.Done():
-				logger.Info("stop sync neighbors")
+				infoLogger.Debug("stop sync neighbors")
 				return
 			default:
 				c.TryUpdateNeighbors()
-				logger.Debug("neighbors:", c.GetNeighbors())
+				debugLogger.Debug("neighbors:", c.GetNeighbors())
 
 				c.EvictNeighbors()
-				logger.Debug("neighbors after eviction:", c.GetNeighbors())
+				debugLogger.Debug("neighbors after eviction:", c.GetNeighbors())
 
 				seconds := c.updateTimeBase + rand.Intn(c.updateTimeRand)
-				logger.Debug("sync neighbors stop:", seconds)
+				debugLogger.Debug("sync neighbors stop:", seconds)
 				time.Sleep(time.Second * time.Duration(seconds))
 			}
 		}
 	}()
-	logger.Info("start sync neighbors")
+	infoLogger.Debug("start sync neighbors")
 }
 
 // StopSyncNeighbors ...

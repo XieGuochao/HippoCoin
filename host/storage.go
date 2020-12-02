@@ -97,11 +97,11 @@ func (storage *HippoStorage) SetBalance(balance Balance) { storage.balance = bal
 // Add ...
 func (storage *HippoStorage) Add(block Block) bool {
 	if !block.Check() {
-		logger.Error("block check failed:", block.Hash())
+		infoLogger.Error("block check failed:", block.Hash())
 		return false
 	}
 
-	logger.Info("storage add:", block.Hash())
+	infoLogger.Debug("storage add:", block.Hash())
 
 	storage.LockBlock()
 	h := block.Hash()
@@ -117,7 +117,7 @@ func (storage *HippoStorage) Add(block Block) bool {
 	storage.UnlockBlock()
 
 	if storage.miningCancel != nil && storage.CheckMiningCancel(block.GetLevel()) {
-		logger.Info("cancel mining and mine the new")
+		infoLogger.Debug("cancel mining and mine the new")
 		storage.miningCancel()
 		storage.miningCancel = nil
 	}
@@ -154,7 +154,7 @@ func (storage *HippoStorage) Add(block Block) bool {
 		balance.Lock()
 		balance.New()
 		mainChain := storage.GetMainChain()
-		logger.Debug("main chain:", mainChain)
+		debugLogger.Debug("main chain:", mainChain)
 		if mainChain != nil {
 			for _, b := range mainChain {
 				balanceChange := b.GetBalanceChange()
@@ -163,14 +163,14 @@ func (storage *HippoStorage) Add(block Block) bool {
 				}
 			}
 		} else {
-			logger.Error("storage: cannot update balance")
+			infoLogger.Error("storage: cannot update balance")
 		}
 		balance.Unlock()
 	} else {
-		logger.Error("storage: no balance")
+		infoLogger.Error("storage: no balance")
 	}
-	logger.Debug("update balance end.")
-	logger.Debug("balance:", storage.balance.AllBalance())
+	debugLogger.Debug("update balance end.")
+	debugLogger.Debug("balance:", storage.balance.AllBalance())
 
 	return false
 }
@@ -342,7 +342,7 @@ func (storage *HippoStorage) GetMainChain() []Block {
 		if i > 0 {
 			block, has = storage.Get(block.ParentHash())
 			if !has {
-				logger.Error("storage: get main chain failed:", block.ParentHash())
+				infoLogger.Error("storage: get main chain failed:", block.ParentHash())
 				return nil
 			}
 		}

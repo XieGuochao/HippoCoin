@@ -108,12 +108,12 @@ func (k *Key) CheckSign(hash []byte, sig []byte) bool {
 func (k *Key) CheckSignString(hash string, sig string) bool {
 	h, err := StringToByte(hash)
 	if err != nil {
-		logger.Debug("check sign string failed:", err)
+		debugLogger.Debug("check sign string failed:", err)
 		return false
 	}
 	s, err := StringToByte(sig)
 	if err != nil {
-		logger.Debug("check sign string failed:", err)
+		debugLogger.Debug("check sign string failed:", err)
 		return false
 	}
 	return k.CheckSign(h, s)
@@ -134,7 +134,7 @@ func GenerateKey(curve elliptic.Curve) *ecdsa.PrivateKey {
 // SaveKey ...
 func SaveKey(key *ecdsa.PrivateKey, privateKeyFile string) {
 	privateKeyBytes := keyToByte(key)
-	logger.Info("Create one key pair:", privateKeyFile)
+	infoLogger.Debug("Create one key pair:", privateKeyFile)
 
 	ioutil.WriteFile(privateKeyFile, privateKeyBytes, 0644)
 }

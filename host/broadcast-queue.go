@@ -53,7 +53,7 @@ func (bq *HippoBroadcastQueue) SetNetworkClient(networkClient NetworkClient) {
 func (bq *HippoBroadcastQueue) Add(b BroadcastBlock) {
 	if b.Level < bq.maxBroadcastLevel {
 		bq.channel <- b
-		logger.Debug("broadcast queue add:", b.Block.Hash())
+		debugLogger.Debug("broadcast queue add:", b.Block.Hash())
 	}
 }
 
@@ -63,10 +63,10 @@ func (bq *HippoBroadcastQueue) Run() {
 		for {
 			select {
 			case <-bq.ctx.Done():
-				logger.Info("broadcast queue closed.")
+				infoLogger.Debug("broadcast queue closed.")
 				return
 			case block := <-bq.channel:
-				logger.Debug("broadcast queue receive broadcast block")
+				debugLogger.Debug("broadcast queue receive broadcast block")
 
 				bq.broadcastBlockSend(block)
 			}
@@ -80,9 +80,9 @@ func (bq *HippoBroadcastQueue) Stop() {
 }
 
 func (bq *HippoBroadcastQueue) broadcastBlockSend(block BroadcastBlock) {
-	logger.Debug("receive broadcast block")
+	debugLogger.Debug("receive broadcast block")
 	addresses := bq.networkClient.GetNeighbors()
-	logger.Debug("neighbors all:", addresses)
+	debugLogger.Debug("neighbors all:", addresses)
 
 	addressesToSend := make(map[string]bool)
 	for _, address := range addresses {
@@ -96,16 +96,16 @@ func (bq *HippoBroadcastQueue) broadcastBlockSend(block BroadcastBlock) {
 	for address := range addressesToSend {
 		block.Addresses[address] = true
 	}
-	logger.Debug("neighbors to send:", addressesToSend)
+	debugLogger.Debug("neighbors to send:", addressesToSend)
 	for address := range addressesToSend {
-		logger.Debug("send broadcast block to", address)
+		debugLogger.Debug("send broadcast block to", address)
 		var reply string
 		if bq.networkClient == nil {
-			logger.Error("broadcast-queue: no netowrk client")
+			infoLogger.Error("broadcast-queue: no netowrk client")
 			break
 		}
 
 		bq.networkClient.BroadcastBlock(address, block, &reply)
 	}
-	logger.Debug("broadcast send done.")
+	debugLogger.Debug("broadcast send done.")
 }

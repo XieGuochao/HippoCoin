@@ -122,14 +122,14 @@ func (t *HippoTransaction) CheckFee() bool {
 // Check with the address balance.
 func (t *HippoTransaction) CheckBalance(balance Balance) bool {
 	if balance == nil {
-		logger.Error("no balance for transaction check")
+		infoLogger.Error("no balance for transaction check")
 		return false
 	}
 	balance.Lock()
 	defer balance.Unlock()
 	safe := true
 	for i, address := range t.SenderAddresses {
-		logger.Debug(address, balance.GetUnsafe(address))
+		debugLogger.Debug(address, balance.GetUnsafe(address))
 		if balance.GetUnsafe(address) < t.SenderAmounts[i] {
 			safe = false
 			break
@@ -160,14 +160,14 @@ func (t *HippoTransaction) Sign(key Key) bool {
 	address := key.ToAddress()
 	pos := t.findAddress(address)
 	if pos == -1 {
-		logger.Info("Cannot sign the transaction:", t.Hash())
+		infoLogger.Debug("Cannot sign the transaction:", t.Hash())
 		return false
 	}
 	if signature, err = key.SignString(t.HashBytes()); err == nil {
 		t.SenderSignatures[pos] = signature
 		return true
 	}
-	logger.Error("sign transaction error:", err)
+	infoLogger.Error("sign transaction error:", err)
 	return false
 }
 
@@ -176,13 +176,13 @@ func (t *HippoTransaction) SetSignature(address string, signature string) bool {
 	var key Key
 	pos := t.findAddress(address)
 	if pos == -1 {
-		logger.Debug("set signature failed: no such address")
+		debugLogger.Debug("set signature failed: no such address")
 		return false
 	}
 
 	key.LoadAddress(address, t.curve)
 	if !key.CheckSignString(t.Hash(), signature) {
-		logger.Debug("set signature failed:", address)
+		debugLogger.Debug("set signature failed:", address)
 		return false
 	}
 	t.SenderSignatures[pos] = signature
@@ -196,7 +196,7 @@ func (t *HippoTransaction) CheckSignatures() bool {
 	for pos, address := range t.SenderAddresses {
 		key.LoadAddress(address, t.curve)
 		if !key.CheckSignString(h, t.SenderSignatures[pos]) {
-			logger.Debug("check signatures failed:", pos, address)
+			debugLogger.Debug("check signatures failed:", pos, address)
 			return false
 		}
 	}
@@ -267,7 +267,7 @@ func (t *HippoTransaction) GetBalanceChange() map[string]int64 {
 func (t *HippoTransaction) Encode() []byte {
 	bytes, err := json.Marshal(*t)
 	if err != nil {
-		logger.Error("encode transaction:", err)
+		infoLogger.Error("encode transaction:", err)
 		return nil
 	}
 	return bytes
@@ -278,7 +278,7 @@ func DecodeTransaction(bytes []byte, hash HashFunction, curve elliptic.Curve) Tr
 	tr := new(HippoTransaction)
 	err := json.Unmarshal(bytes, tr)
 	if err != nil {
-		logger.Error("decode transaction error:", err)
+		infoLogger.Error("decode transaction error:", err)
 		return nil
 	}
 	tr.hashFunction = hash

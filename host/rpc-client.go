@@ -57,7 +57,7 @@ func (c *P2PClient) New(ctx context.Context, protocol string, address string) (e
 	c.parentCtx = ctx
 	c.c, err = rpc.DialHTTP(protocol, address)
 	if err != nil {
-		logger.Error(err, protocol, address)
+		infoLogger.Error(err, protocol, address)
 	}
 	return
 }
@@ -73,7 +73,7 @@ func (c *P2PClient) Copy() P2PClientInterface {
 
 // Close ...
 func (c *P2PClient) Close() {
-	defer logger.Debug("ping close.")
+	defer debugLogger.Debug("ping close.")
 
 	c.cancel()
 	if c.c != nil {
@@ -108,17 +108,17 @@ func (c *P2PClient) QueryByHash(hashValue string) (block Block) {
 	err := c.c.Call(P2PServiceName+".QueryByHash",
 		hashValue, &reply)
 	if err != nil {
-		logger.Error("query by hash: cannot decode block:", err)
+		infoLogger.Error("query by hash: cannot decode block:", err)
 		return nil
 	}
 
 	if c.templateBlock == nil {
-		logger.Error("query by hash: no template block")
+		infoLogger.Error("query by hash: no template block")
 		return nil
 	}
 	block = DecodeBlock(reply, c.templateBlock)
 	if block == nil {
-		logger.Error("query by hash: cannot decode block")
+		infoLogger.Error("query by hash: cannot decode block")
 	}
 	return
 }
@@ -141,6 +141,6 @@ func (c *P2PClient) QueryHashes(hashes []string) (block []Block) {
 
 // BroadcastBlock ...
 func (c *P2PClient) BroadcastBlock(data NetworkSendInterface, reply *string) error {
-	// logger.Debug("broadcastBlock to send", data)
+	// debugLogger.Debug("broadcastBlock to send", data)
 	return c.c.Call(P2PServiceName+".BroadcastBlock", data.Encode(), reply)
 }

@@ -55,9 +55,9 @@ func initKeys(number int) {
 }
 
 func initTest(number int) {
-	initLogger()
-	logger.WithDebug()
-	logger.WithColor()
+	initLogger("")
+	debugLogger.WithDebug()
+	debugLogger.WithColor()
 	initKeys(number)
 	testMiningFunction = new(SingleMiningFunction)
 	testBalance = new(HippoBalance)
@@ -126,10 +126,10 @@ func initNetwork() {
 	testNetworkListener.New(testContext, testIP, testProtocol)
 	testNetworkListener.Listen()
 
-	logger.Info("create listener")
+	infoLogger.Debug("create listener")
 
 	testAddress = testNetworkListener.NetworkAddress()
-	logger.Info("listener address:", testAddress)
+	infoLogger.Debug("listener address:", testAddress)
 
 	testP2PServer = new(P2PServer)
 	testP2PServer.new(testContext, testNetworkListener.Listener())
@@ -141,14 +141,14 @@ func initNetwork() {
 	testRegister = new(HippoRegister)
 	testRegister.New(testContext, testRegisterAddress, testRegisterProtocol)
 
-	logger.Info("create register")
+	infoLogger.Debug("create register")
 
 	testNetworkClient = new(HippoNetworkClient)
 	testNetworkClient.New(testContext, testAddress, testProtocol,
 		10, testRegister, 5, 2, &testP2PClientTemplate, testBlockTemplate)
 
 	testBroadcastQueue.SetNetworkClient(testNetworkClient)
-	logger.Info("create network client")
+	infoLogger.Debug("create network client")
 
 }
 
@@ -161,8 +161,8 @@ func watchStorageBalance(storage Storage, balance Balance,
 	seconds int64) {
 	for {
 		time.Sleep(time.Second * time.Duration(seconds))
-		logger.Info("block hashes: [", storage.MaxLevel(), "]",
+		infoLogger.Debug("block hashes: [", storage.MaxLevel(), "]",
 			storage.AllHashesInLevel())
-		logger.Info("balance:", balance.AllBalance())
+		infoLogger.Debug("balance:", balance.AllBalance())
 	}
 }

@@ -28,7 +28,7 @@ type HippoConfig struct {
 	RegisterAddress  string `yaml:"register-address"`
 	RegisterProtocol string `yaml:"register-protocol"`
 
-	DebugPath string `yaml:"debug-path"`
+	DebugFileTemplate string `yaml:"debug-file-template"`
 }
 
 // Load ...

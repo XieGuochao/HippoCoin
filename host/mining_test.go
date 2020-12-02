@@ -9,7 +9,7 @@ import (
 
 func TestMiningOK(t *testing.T) {
 	initTest(3)
-	logger.Info("test mining ===============================================")
+	infoLogger.Debug("test mining ===============================================")
 	balance := new(HippoBalance)
 	// block
 	var block Block
@@ -26,12 +26,12 @@ func TestMiningOK(t *testing.T) {
 	testMiningFunction.New(testHashfunction, 1)
 
 	miningQueue := new(MiningQueue)
-	// logger.Debug("hash function:", &testHashfunction)
+	// debugLogger.Debug("hash function:", &testHashfunction)
 	miningQueue.New(ctx, func(has bool, block Block, storage Storage, bq BroadcastQueue) {
-		logger.Info("has:", has)
-		logger.Info("mine a block:", block)
-		logger.Info("mine check:", block.CheckNonce(), block.Check())
-		logger.Debug("invoke stop")
+		infoLogger.Debug("has:", has)
+		infoLogger.Debug("mine a block:", block)
+		infoLogger.Debug("mine check:", block.CheckNonce(), block.Check())
+		debugLogger.Debug("invoke stop")
 		mining.Stop()
 	}, testHashfunction, testMiningFunction)
 
@@ -52,7 +52,7 @@ func TestMiningOK(t *testing.T) {
 
 func TestMiningStop(t *testing.T) {
 	initTest(3)
-	logger.Info("test mining ===============================================")
+	infoLogger.Debug("test mining ===============================================")
 	balance := new(HippoBalance)
 	// block
 	var block Block
@@ -69,7 +69,7 @@ func TestMiningStop(t *testing.T) {
 	testMiningFunction.New(testHashfunction, 1)
 
 	miningQueue := new(MiningQueue)
-	// logger.Debug("hash function:", &testHashfunction)
+	// debugLogger.Debug("hash function:", &testHashfunction)
 	miningQueue.New(ctx, miningCallbackLog, testHashfunction, testMiningFunction)
 
 	wg.Add(1)
@@ -86,7 +86,7 @@ func TestMiningStop(t *testing.T) {
 
 	go func() {
 		time.Sleep(time.Second * time.Duration(10))
-		logger.Debug("invoke stop")
+		debugLogger.Debug("invoke stop")
 		mining.Stop()
 	}()
 
@@ -95,7 +95,7 @@ func TestMiningStop(t *testing.T) {
 
 func TestMiningMultipleOK(t *testing.T) {
 	initTest(3)
-	logger.Info("test mining ===============================================")
+	infoLogger.Debug("test mining ===============================================")
 	balance := new(HippoBalance)
 	// block
 	var block Block
@@ -113,7 +113,7 @@ func TestMiningMultipleOK(t *testing.T) {
 	testMiningFunction.New(testHashfunction, 4)
 
 	miningQueue := new(MiningQueue)
-	// logger.Debug("hash function:", &testHashfunction)
+	// debugLogger.Debug("hash function:", &testHashfunction)
 	miningQueue.New(ctx, func(has bool, block Block, storage Storage, bq BroadcastQueue) {
 		miningCallbackLog(has, block, storage, bq)
 		mining.Stop()
@@ -132,7 +132,7 @@ func TestMiningMultipleOK(t *testing.T) {
 
 	go func() {
 		time.Sleep(time.Second * time.Duration(10))
-		logger.Debug("invoke stop")
+		debugLogger.Debug("invoke stop")
 		mining.Stop()
 	}()
 

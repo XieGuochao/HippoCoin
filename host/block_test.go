@@ -7,7 +7,7 @@ import (
 
 func TestBlock(t *testing.T) {
 	initTest(3)
-	logger.Info("test block ===============================================")
+	infoLogger.Debug("test block ===============================================")
 	// balance
 	balance := new(HippoBalance)
 	balance.New()
@@ -35,10 +35,10 @@ func TestBlock(t *testing.T) {
 
 	// Sign
 	tr.Sign(testKeys[0])
-	logger.Debug("check:", tr.Check(balance))
+	debugLogger.Debug("check:", tr.Check(balance))
 
 	// Get balance
-	logger.Debug("balances:", balance.Get(testKeys[0].ToAddress()),
+	debugLogger.Debug("balances:", balance.Get(testKeys[0].ToAddress()),
 		balance.Get(testKeys[1].ToAddress()), balance.Get(testKeys[2].ToAddress()))
 
 	trs := make([]Transaction, 1)
@@ -47,14 +47,14 @@ func TestBlock(t *testing.T) {
 	block := new(HippoBlock)
 	block.New([]byte{}, 250, testHashfunction, 0, balance, testCurve)
 	block.SetTransactions(trs)
-	logger.Debug("check transactions:", block.CheckTransactions())
+	debugLogger.Debug("check transactions:", block.CheckTransactions())
 
-	logger.Debug("check sign before:", block.CheckSignature())
+	debugLogger.Debug("check sign before:", block.CheckSignature())
 	block.Sign(testKeys[0])
-	logger.Debug("check sign:", block.CheckSignature())
+	debugLogger.Debug("check sign:", block.CheckSignature())
 
-	logger.Debug("check nonce:", block.CheckNonce())
-	logger.Debug("check:", block.Check())
+	debugLogger.Debug("check nonce:", block.CheckNonce())
+	debugLogger.Debug("check:", block.Check())
 }
 
 func TestJsonBlock(t *testing.T) {
@@ -98,12 +98,12 @@ func TestJsonBlock(t *testing.T) {
 	)
 	bytes = bb.Encode()
 	fmt.Printf("\n%+v\n", *block)
-	logger.Debug(string(bytes))
+	debugLogger.Debug(string(bytes))
 
 	var rb ReceiveBlock
 	var bb2 BroadcastBlock
 	rb.Data = bytes
 
 	rb.Decode(&bb2)
-	logger.Debug(bb2.Block, bb2.Block.GetTransactions(), bb2.Level, bb2.Addresses)
+	debugLogger.Debug(bb2.Block, bb2.Block.GetTransactions(), bb2.Level, bb2.Addresses)
 }

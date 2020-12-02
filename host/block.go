@@ -181,7 +181,7 @@ func (b *HippoBlock) generateSignature(key Key) (string, error) {
 		err error
 	)
 	if s, err = key.Sign(b.HashBytes()); err != nil {
-		logger.Error("block generate sign failed:", err)
+		infoLogger.Error("block generate sign failed:", err)
 		return "", err
 	}
 	return ByteToString(s), nil
@@ -267,7 +267,7 @@ func (b *HippoBlock) Encode() []byte {
 	)
 	blockBytes, err = json.Marshal(*b)
 	if err != nil {
-		logger.Error("encoding block:", err)
+		infoLogger.Error("encoding block:", err)
 		return nil
 	}
 	transactionsBytes = make([][]byte, len(b.transactions))
@@ -295,13 +295,13 @@ func DecodeBlock(bytes []byte, tempalteBlock Block) Block {
 	var be BlockEncoding
 	err := json.Unmarshal(bytes, &be)
 	if err != nil {
-		logger.Error("decode block error:", err)
+		infoLogger.Error("decode block error:", err)
 		return nil
 	}
 
 	err = json.Unmarshal(be.Block, b)
 	if err != nil {
-		logger.Error("decode block error:", err)
+		infoLogger.Error("decode block error:", err)
 		return nil
 	}
 
@@ -329,7 +329,7 @@ type DifficultyFunc func(block Block, storage Storage,
 func BasicDifficulty(block Block, storage Storage,
 	baseInterval int64) uint {
 	lastInterval := storage.GetLastInterval()
-	logger.Debug("difficulty: lastinterval", lastInterval)
+	debugLogger.Debug("difficulty: lastinterval", lastInterval)
 	if lastInterval == -1 {
 		return block.GetNumBytes()
 	}

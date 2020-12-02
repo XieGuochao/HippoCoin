@@ -36,20 +36,20 @@ func (r *HippoRegister) New(ctx context.Context, address, protocol string) {
 	r.ctx, r.cancel = context.WithCancel(ctx)
 	r.client, err = registerlib.CreateClient(r.protocol, r.address)
 	if err != nil {
-		logger.Fatal("new register client error:", err)
+		infoLogger.Fatal("new register client error:", err)
 	}
-	logger.Debug("create register client success", r.client)
+	debugLogger.Debug("create register client success", r.client)
 
 	var response string
 	err = r.client.Ping("", &response)
 	if err != nil {
-		logger.Fatal("new register client error:", err)
+		infoLogger.Fatal("new register client error:", err)
 	}
-	logger.Debug("register ping success")
+	debugLogger.Debug("register ping success")
 
 	// p2p service register
 
-	logger.Info("new register client done.")
+	infoLogger.Debug("new register client done.")
 }
 
 // Register ...
@@ -58,7 +58,7 @@ func (r *HippoRegister) Register() error {
 		reply string
 	)
 	err := r.client.Register(r.address, &reply)
-	logger.Debug("register:", reply)
+	debugLogger.Debug("register:", reply)
 	return err
 }
 

@@ -7,7 +7,7 @@ import (
 
 func TestMiningBroadcast(t *testing.T) {
 	initTest(1)
-	logger.Info("test register ======================================")
+	infoLogger.Debug("test register ======================================")
 	initPrenetwork()
 	initNetwork()
 	initNetworkRun()
@@ -17,7 +17,7 @@ func TestMiningBroadcast(t *testing.T) {
 	block = new(HippoBlock)
 	block.New([]byte{}, 232, testHashfunction, 0, testBalance, testCurve)
 
-	logger.Debug("going to fetch")
+	debugLogger.Debug("going to fetch")
 
 	go testMining.WatchSendNewBlock()
 	block = testMining.Fetch(block)
@@ -26,14 +26,14 @@ func TestMiningBroadcast(t *testing.T) {
 
 	for {
 		time.Sleep(time.Second * time.Duration(5))
-		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
-		logger.Info("balance:", testBalance.AllBalance())
+		infoLogger.Debug("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
+		infoLogger.Debug("balance:", testBalance.AllBalance())
 	}
 }
 
 func TestListenBroadcast(t *testing.T) {
 	initTest(1)
-	logger.Info("test ping ======================================")
+	infoLogger.Debug("test ping ======================================")
 
 	initPrenetwork()
 	initNetwork()
@@ -41,13 +41,13 @@ func TestListenBroadcast(t *testing.T) {
 
 	for {
 		time.Sleep(time.Second * time.Duration(5))
-		logger.Info("block hashes:", testStorage.AllHashesInLevel())
+		infoLogger.Debug("block hashes:", testStorage.AllHashesInLevel())
 	}
 }
 
 func TestQueryLevel(t *testing.T) {
 	initTest(1)
-	logger.Info("test query level ==============================")
+	infoLogger.Debug("test query level ==============================")
 
 	initPrenetwork()
 	initNetwork()
@@ -62,13 +62,13 @@ func TestQueryLevel(t *testing.T) {
 			continue
 		}
 		testNetworkClient.QueryLevel(neighbors[0], 0, 4, &reply)
-		logger.Info("levels:", reply)
+		infoLogger.Debug("levels:", reply)
 	}
 }
 
 func TestQueryGenisus(t *testing.T) {
 	initTest(1)
-	logger.Info("test query genisus ==============================")
+	infoLogger.Debug("test query genisus ==============================")
 
 	initPrenetwork()
 	initNetwork()
@@ -85,17 +85,17 @@ func TestQueryGenisus(t *testing.T) {
 			continue
 		}
 		testNetworkClient.QueryLevel(neighbors[0], 0, 0, &reply)
-		logger.Info("levels:", reply)
+		infoLogger.Debug("levels:", reply)
 		if len(reply) > 0 {
 			block = testNetworkClient.QueryByHash(neighbors[0], reply[0])
-			logger.Info("block0:", block.Hash(), block.HashSignature())
+			infoLogger.Debug("block0:", block.Hash(), block.HashSignature())
 		}
 	}
 }
 
 func TestQueryHashes(t *testing.T) {
 	initTest(1)
-	logger.Info("test query genisus ==============================")
+	infoLogger.Debug("test query genisus ==============================")
 
 	initPrenetwork()
 	initNetwork()
@@ -111,22 +111,22 @@ func TestQueryHashes(t *testing.T) {
 			continue
 		}
 		testNetworkClient.QueryLevel(neighbors[0], 0, 5, &reply)
-		logger.Info("levels:", reply)
+		infoLogger.Debug("levels:", reply)
 		newHashes := testStorage.FilterNewHashes(reply)
 		newBlocks := testNetworkClient.QueryHashes(neighbors[0], newHashes)
 		if newBlocks != nil {
 			testStorage.AddBlocks(newBlocks)
 			for _, b := range newBlocks {
-				logger.Info("update new block:", b.Hash())
+				infoLogger.Debug("update new block:", b.Hash())
 			}
 		}
-		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
+		infoLogger.Debug("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
 	}
 }
 
 func TestSyncBlocks(t *testing.T) {
 	initTest(1)
-	logger.Info("test sync blocks ==============================")
+	infoLogger.Debug("test sync blocks ==============================")
 
 	initPrenetwork()
 	initNetwork()
@@ -140,13 +140,13 @@ func TestSyncBlocks(t *testing.T) {
 		}
 
 		testNetworkClient.SyncBlocks(neighbors[0], testStorage)
-		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
+		infoLogger.Debug("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
 	}
 }
 
 func TestSyncAddressesN(t *testing.T) {
 	initTest(1)
-	logger.Info("test sync addresses n ==============================")
+	infoLogger.Debug("test sync addresses n ==============================")
 
 	initPrenetwork()
 	initNetwork()
@@ -155,13 +155,13 @@ func TestSyncAddressesN(t *testing.T) {
 	for {
 		time.Sleep(time.Second * time.Duration(10))
 		testNetworkClient.SyncAddressesN(3, testStorage)
-		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
+		infoLogger.Debug("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
 	}
 }
 
 func TestStartSyncBlocks(t *testing.T) {
 	initTest(1)
-	logger.Info("test sync blocks ==============================")
+	infoLogger.Debug("test sync blocks ==============================")
 
 	initPrenetwork()
 	initNetwork()
@@ -170,6 +170,6 @@ func TestStartSyncBlocks(t *testing.T) {
 
 	for {
 		time.Sleep(time.Second * time.Duration(15))
-		logger.Info("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
+		infoLogger.Debug("block hashes: [", testStorage.MaxLevel(), "]", testStorage.AllHashesInLevel())
 	}
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/withmandala/go-log"
 
@@ -12,12 +14,32 @@ import (
 
 var version = "1.0"
 
-var logger *log.Logger
+var (
+	debugLogger *log.Logger
+	debugFile   *os.File
+	infoLogger  *log.Logger
+)
 
-func initLogger() {
-	logger = log.New(os.Stdout)
-	logger.WithDebug()
-	logger.WithColor()
+func initLogger(debugPath string) {
+	var err error
+
+	if debugPath == "" {
+		debugLogger = log.New(os.Stdout)
+	} else {
+		debugFile, err = os.Create(debugPath)
+		if err != nil {
+			fmt.Errorf("error: %s", err)
+			return
+		}
+		debugLogger = log.New(debugFile)
+	}
+
+	debugLogger.WithDebug()
+	debugLogger.WithColor()
+
+	infoLogger = log.New(os.Stdout)
+	infoLogger.WithoutDebug()
+	infoLogger.WithColor()
 }
 
 func main() {
@@ -40,8 +62,12 @@ func main() {
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 	host = new(HippoHost)
+
+	t := time.Now().Format("2006-01-02-15-04-05")
+	host.New(true, fmt.Sprintf(config.DebugFileTemplate, t), config.curve, true)
 	host.InitLogger(true)
-	host.New(true, config.curve, true)
+
+	fmt.Println("output to debug file:", t+"-debug.out")
 
 	host.InitLocals(ctx, Hash, config.miningFunction, 1,
 		new(P2PClient), uint(config.BroadcastQueueLen), MiningCallbackBroadcastSave,

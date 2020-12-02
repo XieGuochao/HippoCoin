@@ -7,7 +7,7 @@ import (
 
 func TestPingSend(t *testing.T) {
 	initTest(1)
-	logger.Info("test ping ======================================")
+	infoLogger.Debug("test ping ======================================")
 
 	initPrenetwork()
 	initNetwork()
@@ -15,19 +15,19 @@ func TestPingSend(t *testing.T) {
 	for {
 		time.Sleep(time.Second * time.Duration(5))
 		testNetworkClient.TryUpdateNeighbors()
-		logger.Debug("neighbors:", testNetworkClient.GetNeighbors())
+		debugLogger.Debug("neighbors:", testNetworkClient.GetNeighbors())
 
 		addresses := testNetworkClient.GetNeighbors()
 		for _, address := range addresses {
 			t, ok := testNetworkClient.Ping(address)
-			logger.Info("ping result:", address, t, ok)
+			infoLogger.Debug("ping result:", address, t, ok)
 		}
 	}
 }
 
 func TestPingReceive(t *testing.T) {
 	initTest(1)
-	logger.Info("test ping ======================================")
+	infoLogger.Debug("test ping ======================================")
 
 	initPrenetwork()
 	initNetwork()
@@ -35,14 +35,14 @@ func TestPingReceive(t *testing.T) {
 	for {
 		time.Sleep(time.Second * time.Duration(5))
 		testNetworkClient.TryUpdateNeighbors()
-		logger.Debug("neighbors:", testNetworkClient.GetNeighbors())
-		logger.Info("running")
+		debugLogger.Debug("neighbors:", testNetworkClient.GetNeighbors())
+		infoLogger.Debug("running")
 	}
 }
 
 func TestRegister(t *testing.T) {
 	initTest(1)
-	logger.Info("test register ======================================")
+	infoLogger.Debug("test register ======================================")
 
 	initPrenetwork()
 	initNetwork()
@@ -56,7 +56,7 @@ func TestRegister(t *testing.T) {
 
 	go func() {
 		for {
-			logger.Info("neighbors:", testNetworkClient.GetNeighbors())
+			infoLogger.Debug("neighbors:", testNetworkClient.GetNeighbors())
 			time.Sleep(time.Second)
 		}
 	}()
@@ -64,7 +64,7 @@ func TestRegister(t *testing.T) {
 	for {
 		select {
 		case <-testContext.Done():
-			logger.Info("test done.")
+			infoLogger.Debug("test done.")
 			return
 		}
 	}

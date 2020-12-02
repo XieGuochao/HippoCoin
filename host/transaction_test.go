@@ -4,12 +4,12 @@ import "testing"
 
 func TestTransaction(t *testing.T) {
 	initTest(3)
-	logger.Info("TestTransaction=====================================================")
+	infoLogger.Debug("TestTransaction=====================================================")
 	tr := HippoTransaction{}
 	tr.New(testHashfunction, testCurve)
 
 	hash0 := tr.Hash()
-	logger.Debug("hash0:", hash0)
+	debugLogger.Debug("hash0:", hash0)
 
 	// transfer a 10 (+3) coins to b.
 	senders := make([]string, 1)
@@ -17,7 +17,7 @@ func TestTransaction(t *testing.T) {
 
 	revertedPublicKey := stringToPublicKey(senders[0], testCurve)
 
-	logger.Debug("revert public key from address:", revertedPublicKey.Equal(testKeys[0].publicKey))
+	debugLogger.Debug("revert public key from address:", revertedPublicKey.Equal(testKeys[0].publicKey))
 
 	senderAmounts := make([]uint64, 1)
 	senderAmounts[0] = 13
@@ -31,24 +31,24 @@ func TestTransaction(t *testing.T) {
 	tr.UpdateFee()
 
 	hash1 := tr.Hash()
-	logger.Debug("hash1:", hash1)
+	debugLogger.Debug("hash1:", hash1)
 	assertT(hash0 != hash1, t)
 
 	// Sign
 	sigCheck := tr.CheckSignatures()
-	logger.Debug("signature check:", sigCheck)
+	debugLogger.Debug("signature check:", sigCheck)
 	assertT(!sigCheck, t)
 
 	result := tr.Sign(testKeys[0])
-	logger.Debug(result)
+	debugLogger.Debug(result)
 	sigCheck = tr.CheckSignatures()
-	logger.Debug("signature check:", sigCheck)
+	debugLogger.Debug("signature check:", sigCheck)
 	assertT(sigCheck, t)
 }
 
 func TestTransactionWithBalance(t *testing.T) {
 	initTest(3)
-	logger.Info("TestTransactionWithoutBalance==============================================")
+	infoLogger.Debug("TestTransactionWithoutBalance==============================================")
 
 	tr := HippoTransaction{}
 	tr.New(testHashfunction, testCurve)
@@ -71,29 +71,29 @@ func TestTransactionWithBalance(t *testing.T) {
 	tr.UpdateFee()
 
 	// Sign
-	logger.Debug("signature check:", tr.CheckSignatures())
+	debugLogger.Debug("signature check:", tr.CheckSignatures())
 	assertT(!tr.CheckSignatures(), t)
 
 	result := tr.Sign(testKeys[0])
-	logger.Debug(result)
-	logger.Debug("signature check:", tr.CheckSignatures())
+	debugLogger.Debug(result)
+	debugLogger.Debug("signature check:", tr.CheckSignatures())
 	assertT(tr.CheckSignatures(), t)
 
-	logger.Debug("check fee:", tr.CheckFee())
+	debugLogger.Debug("check fee:", tr.CheckFee())
 	assertT(tr.CheckFee(), t)
 
 	balance := new(HippoBalance)
 	balance.New()
-	logger.Debug("balance check before:", tr.CheckBalance(balance))
+	debugLogger.Debug("balance check before:", tr.CheckBalance(balance))
 	assertT(!tr.CheckBalance(balance), t)
 
 	balance.Store(senders[0], 20)
-	logger.Debug("balance check after:", tr.CheckBalance(balance))
+	debugLogger.Debug("balance check after:", tr.CheckBalance(balance))
 	assertT(tr.CheckBalance(balance), t)
 
-	logger.Debug("check:", tr.Check(balance))
+	debugLogger.Debug("check:", tr.Check(balance))
 
 	// Get balance
-	logger.Debug("balances:", balance.Get(testKeys[0].ToAddress()),
+	debugLogger.Debug("balances:", balance.Get(testKeys[0].ToAddress()),
 		balance.Get(testKeys[1].ToAddress()), balance.Get(testKeys[2].ToAddress()))
 }

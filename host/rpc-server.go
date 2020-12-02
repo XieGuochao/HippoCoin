@@ -46,9 +46,9 @@ type P2PServer struct {
 func (s *P2PServer) new(parentContext context.Context, listener net.Listener) {
 	s.ctx, s.cancel = context.WithCancel(parentContext)
 	s.listener = listener
-	logger.Info("register p2p server error:", RegisterP2PService(s))
+	infoLogger.Debug("register p2p server error:", RegisterP2PService(s))
 	rpc.HandleHTTP()
-	logger.Info("start serving HTTP")
+	infoLogger.Debug("start serving HTTP")
 	go http.Serve(listener, nil)
 }
 
@@ -60,13 +60,13 @@ func (s *P2PServer) serve() {
 		for {
 			select {
 			case <-s.ctx.Done():
-				logger.Info("p2p server close.")
+				infoLogger.Debug("p2p server close.")
 				return
 			default:
 				conn, err := s.listener.Accept()
-				logger.Info("p2p server receive conn:", err)
+				infoLogger.Debug("p2p server receive conn:", err)
 				if err != nil {
-					logger.Error("p2p server accept error:", err)
+					infoLogger.Error("p2p server accept error:", err)
 				} else {
 					go rpc.ServeConn(conn)
 				}
@@ -85,7 +85,7 @@ func (s *P2PServer) setBroadcastQueue(broadcastQueue BroadcastQueue) {
 
 // Ping ...
 func (s *P2PServer) Ping(request string, reply *string) error {
-	logger.Debug("receive ping:", request)
+	debugLogger.Debug("receive ping:", request)
 	*reply = request
 	return nil
 }
@@ -104,9 +104,9 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 		broadcastBlock BroadcastBlock
 		block          Block
 	)
-	// logger.Debug("receive bytes:", sendBlockByte)
+	// debugLogger.Debug("receive bytes:", sendBlockByte)
 	receiveBlock.Decode(&broadcastBlock)
-	// logger.Debug("receive block:", broadcastBlock)
+	// debugLogger.Debug("receive block:", broadcastBlock)
 	block = broadcastBlock.Block
 
 	block.CopyConstants(s.blockTemplate)
@@ -121,7 +121,7 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 	if s.storage != nil {
 		s.storage.Add(block)
 	} else {
-		logger.Debug("no storage in rpc server")
+		debugLogger.Debug("no storage in rpc server")
 	}
 
 	// and broadcast.
@@ -129,7 +129,7 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 		broadcastBlock.Level++
 		s.broadcastQueue.Add(broadcastBlock)
 	} else {
-		logger.Debug("no broadcast queue in rpc server")
+		debugLogger.Debug("no broadcast queue in rpc server")
 	}
 
 	return nil

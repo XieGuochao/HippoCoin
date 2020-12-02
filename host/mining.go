@@ -97,20 +97,20 @@ func (m *HippoMining) WatchSendNewBlock() {
 	for {
 		select {
 		case <-m.queue.queueContext.Done():
-			logger.Debug("mining: listen send new block stop.")
+			debugLogger.Debug("mining: listen send new block stop.")
 			return
 
 		case <-m.queue.miningStatus:
-			// logger.Info("channel length:", len(m.channel))
-			logger.Info("mining queue chenged")
+			// infoLogger.Debug("channel length:", len(m.channel))
+			infoLogger.Debug("mining queue chenged")
 
 			if len(m.queue.channel) == 0 {
 				if m.storage == nil {
-					logger.Error("hippo mining: no storage.")
+					infoLogger.Error("hippo mining: no storage.")
 					continue
 				}
 				if m.transactionPool == nil {
-					logger.Error("hippo mining: no transaction pool.")
+					infoLogger.Error("hippo mining: no transaction pool.")
 					continue
 				}
 
@@ -124,7 +124,7 @@ func (m *HippoMining) WatchSendNewBlock() {
 				block = m.Fetch(block)
 
 				block.Sign(m.key)
-				logger.Info("block level:", block.GetLevel())
+				infoLogger.Debug("block level:", block.GetLevel())
 				m.Mine(block)
 			}
 		default:

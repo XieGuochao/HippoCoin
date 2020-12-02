@@ -4,17 +4,14 @@ import (
 	"context"
 	"crypto/elliptic"
 	"crypto/sha256"
-	"os"
 	"sync"
-
-	"github.com/withmandala/go-log"
 
 	registerlib "github.com/XieGuochao/HippoCoinRegister/lib"
 )
 
 // Host ...
 type Host interface {
-	New(debug bool, curve elliptic.Curve, localMode bool)
+	New(debug bool, debugFile string, curve elliptic.Curve, localMode bool)
 
 	Run()
 	InitLogger(debug bool)
@@ -87,6 +84,7 @@ type HippoHost struct {
 	blockTemplate   Block
 
 	miningInterval int64
+	debugFile      string
 }
 
 // InitKey ...
@@ -94,18 +92,17 @@ func (host *HippoHost) InitKey(curve elliptic.Curve) {
 	host.curve = curve
 	host.key.New(curve)
 	host.key.GenerateKey()
-	logger.Info("key:", host.key.ToAddress())
+	infoLogger.Debug("key:", host.key.ToAddress())
 }
 
 // InitLogger ...
 func (host *HippoHost) InitLogger(debug bool) {
-	initLogger()
+	initLogger(host.debugFile)
 	if debug {
-		logger.WithDebug()
+		debugLogger.WithDebug()
 	} else {
-		logger.WithoutDebug()
+		debugLogger.WithoutDebug()
 	}
-	logger.WithColor()
 }
 
 // InitLocals ...
@@ -186,10 +183,10 @@ func (host *HippoHost) InitNetwork(
 	host.networkListener.New(host.ctx, host.IP, host.protocol)
 	host.networkListener.Listen()
 
-	logger.Info("listener: create")
+	infoLogger.Debug("listener: create")
 
 	host.address = host.networkListener.NetworkAddress()
-	logger.Info("listener:", host.address)
+	infoLogger.Debug("listener:", host.address)
 
 	host.P2PServer = new(P2PServer)
 	host.P2PServer.new(host.ctx, host.networkListener.Listener())
@@ -203,14 +200,14 @@ func (host *HippoHost) InitNetwork(
 	host.register = new(HippoRegister)
 	host.register.New(host.ctx, host.registerAddress, host.registerProtocol)
 
-	logger.Info("register: create")
+	infoLogger.Debug("register: create")
 
 	host.networkClient = new(HippoNetworkClient)
 	host.networkClient.New(host.ctx, host.address, host.protocol,
 		maxNeighbors, host.register, updateTimeBase,
 		updateTimeRand, host.P2PClientTemplate, host.blockTemplate)
 	host.broadcastQueue.SetNetworkClient(host.networkClient)
-	logger.Info("network client: created")
+	infoLogger.Debug("network client: created")
 }
 
 // Run ...
@@ -230,21 +227,22 @@ func (host *HippoHost) Run() {
 
 	go watchStorageBalance(host.storage, host.balance,
 		20)
-	logger.Info("host running")
+	infoLogger.Debug("host running")
 	host.waitGroup.Wait()
 }
 
 // New ...
-func (host *HippoHost) New(debug bool, curve elliptic.Curve,
-	localMode bool) {
+func (host *HippoHost) New(debug bool, debugFile string,
+	curve elliptic.Curve, localMode bool) {
 	host.InitLogger(debug)
 	host.InitKey(curve)
 	host.localMode = localMode
+	host.debugFile = debugFile
 }
 
 // Close ...
 func (host *HippoHost) Close() {
-	logger.Info("host: closed")
+	infoLogger.Debug("host: closed")
 	host.cancel()
 }
 
@@ -252,10 +250,4 @@ func (host *HippoHost) Close() {
 func Hash(key []byte) []byte {
 	bytes := sha256.Sum256(key)
 	return bytes[:]
-}
-
-func initLogger() {
-	logger = log.New(os.Stdout)
-	logger.WithDebug()
-	logger.WithColor()
 }
