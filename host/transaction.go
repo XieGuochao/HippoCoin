@@ -36,6 +36,8 @@ type Transaction interface {
 
 	GetTimestamp() int64
 	GetFee() uint64
+	GetSender() ([]string, []uint64)
+	GetReceiver() ([]string, []uint64)
 
 	Encode() []byte
 }
@@ -261,6 +263,16 @@ func (t *HippoTransaction) GetBalanceChange() map[string]int64 {
 	}
 	result["fee"] = int64(t.Fee)
 	return result
+}
+
+// GetSender ...
+func (t *HippoTransaction) GetSender() ([]string, []uint64) {
+	return t.SenderAddresses, t.SenderAmounts
+}
+
+// GetReceiver ...
+func (t *HippoTransaction) GetReceiver() ([]string, []uint64) {
+	return t.ReceiverAddresses, t.ReceiverAmounts
 }
 
 // Encode ...

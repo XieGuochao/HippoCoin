@@ -25,13 +25,24 @@
     <div class="container-fluid">
         <h1>Hello, <i>HippoCoin</i> Web Client!</h1>
         <hr>
+        <h3>My Address:</h3>
+        <p>{{.address}}</p>
+        <hr>
+
+        <h3>My Key:</h3>
+        <p>{{.publicKey}}</p>
+        <hr>
+        
         <h3>Local Storage</h3>
         <ul>
             {{range $i, $onelevel := .levels}}
             <h5>{{$i}}</h5>
             <ul>
                 {{range $_, $b := $onelevel}}
-                <li>{{ $b.Hash }} => {{ $b.ParentHash }} </li>
+                <li>
+                    <a href="/block/{{ $b.Hash }}" >{{ $b.Hash }}</a> 👉 
+                    <a href="/block/{{ $b.ParentHash }}" >{{ $b.ParentHash }}</a>
+                </li>
                 {{end}}
             </ul>
             {{end}}

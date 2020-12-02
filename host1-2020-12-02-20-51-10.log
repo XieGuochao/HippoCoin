@@ -1,0 +1,56 @@
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*SingleMiningFunction).New:mining-functions.go:28 [0muse single mining
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoRegister).New:register.go:41 [0mcreate register client success &{0xc000181aa0 }
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoRegister).New:register.go:48 [0mregister ping success
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoNetworkClient).SyncNeighbors.func1:network.go:539 [0mneighbors: []
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoNetworkClient).EvictNeighbors:network.go:505 [0m[]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoNetworkClient).SyncNeighbors.func1:network.go:542 [0mneighbors after eviction: []
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoNetworkClient).SyncNeighbors.func1:network.go:545 [0msync neighbors stop: 31
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*MiningQueue).add:mining-queue.go:127 [0madd block to mining queue: f8b6315c0d14c56572d01f7b627a6f544927d7f9cd15cd71d5255dd998cb7547
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*MiningQueue).main:mining-queue.go:87 [0mnew block to mining queue: f8b6315c0d14c56572d01f7b627a6f544927d7f9cd15cd71d5255dd998cb7547
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.mineBase:mining-functions.go:126 [0mmineBase numBytes: 235
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:10 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.mineBase:mining-functions.go:127 [0mbaseHash: 51836e7a79d8ce8ca926d8a223b90f3be4a8ce5d7d95b83b8100960be02da43f
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.mineBase:mining-functions.go:141 [0m[0] found: 2680883473
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).Add:broadcast-queue.go:56 [0mbroadcast queue add: f8b6315c0d14c56572d01f7b627a6f544927d7f9cd15cd71d5255dd998cb7547
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).Run.func1:broadcast-queue.go:69 [0mbroadcast queue receive broadcast block
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:83 [0mreceive broadcast block
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:85 [0mneighbors all: []
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:99 [0mneighbors to send: map[]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:110 [0mbroadcast send done.
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoStorage).Add:storage.go:158 [0mmain chain: [0xc0003e20a0]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoStorage).Add:storage.go:173 [0mupdate balance end.
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoStorage).Add:storage.go:174 [0mbalance: map[1f948f915f8d705e89797785951a15e76d551e89cc7fb684c62dc5be|d1d38af8a2d0097f390435b662f361b672980cbdeeea515348757f99:10000000000]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.BasicDifficulty:block.go:333 [0mdifficulty: lastinterval -1
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*MiningQueue).add:mining-queue.go:127 [0madd block to mining queue: be267998ef4900725b2a121402ca702c53302e72fc9a3749f4485409b1bf8077
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*MiningQueue).main:mining-queue.go:87 [0mnew block to mining queue: be267998ef4900725b2a121402ca702c53302e72fc9a3749f4485409b1bf8077
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.mineBase:mining-functions.go:126 [0mmineBase numBytes: 235
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.mineBase:mining-functions.go:127 [0mbaseHash: 0863abdc9272edabd9c4f7329839119213d7ccfe9bfd42a7a1bc99e8384dbc21
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:11 [0m[0;33mgithub.com/XieGuochao/HippoCoin/ui.(*UI).New.func3:ui.go:100 [0mmap[f8b6315c0d14c56572d01f7b627a6f544927d7f9cd15cd71d5255dd998cb7547:0xc0003e20a0]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:17 [0m[0;33mgithub.com/XieGuochao/HippoCoin/ui.(*UI).New.func3:ui.go:100 [0mmap[f8b6315c0d14c56572d01f7b627a6f544927d7f9cd15cd71d5255dd998cb7547:0xc0003e20a0]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:17 [0m[0;33mgithub.com/XieGuochao/HippoCoin/ui.(*UI).New.func3:ui.go:100 [0mmap[f8b6315c0d14c56572d01f7b627a6f544927d7f9cd15cd71d5255dd998cb7547:0xc0003e20a0]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:18 [0m[0;33mgithub.com/XieGuochao/HippoCoin/ui.(*UI).New.func3:ui.go:100 [0mmap[f8b6315c0d14c56572d01f7b627a6f544927d7f9cd15cd71d5255dd998cb7547:0xc0003e20a0]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:18 [0m[0;33mgithub.com/XieGuochao/HippoCoin/ui.(*UI).New.func3:ui.go:100 [0mmap[f8b6315c0d14c56572d01f7b627a6f544927d7f9cd15cd71d5255dd998cb7547:0xc0003e20a0]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.mineBase:mining-functions.go:141 [0m[0] found: 3029230537
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).Add:broadcast-queue.go:56 [0mbroadcast queue add: be267998ef4900725b2a121402ca702c53302e72fc9a3749f4485409b1bf8077
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).Run.func1:broadcast-queue.go:69 [0mbroadcast queue receive broadcast block
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:83 [0mreceive broadcast block
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:85 [0mneighbors all: []
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:99 [0mneighbors to send: map[]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:110 [0mbroadcast send done.
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoStorage).Add:storage.go:158 [0mmain chain: [0xc0003e20a0 0xc000272320]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoStorage).Add:storage.go:173 [0mupdate balance end.
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoStorage).Add:storage.go:174 [0mbalance: map[1f948f915f8d705e89797785951a15e76d551e89cc7fb684c62dc5be|d1d38af8a2d0097f390435b662f361b672980cbdeeea515348757f99:20000000000]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.BasicDifficulty:block.go:333 [0mdifficulty: lastinterval 1
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*MiningQueue).add:mining-queue.go:127 [0madd block to mining queue: 20118650e347464f700736e45b6f11a4b8ccfbb302578691dbd4c1aa7b2a6912
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*MiningQueue).main:mining-queue.go:87 [0mnew block to mining queue: 20118650e347464f700736e45b6f11a4b8ccfbb302578691dbd4c1aa7b2a6912
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.mineBase:mining-functions.go:126 [0mmineBase numBytes: 234
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:23 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.mineBase:mining-functions.go:127 [0mbaseHash: 4668eaf18de1f1c368b9899df21a5cc2d6a96d253c1ed2647af4c676d10b0dde
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.mineBase:mining-functions.go:141 [0m[0] found: 2620166598
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).Add:broadcast-queue.go:56 [0mbroadcast queue add: 20118650e347464f700736e45b6f11a4b8ccfbb302578691dbd4c1aa7b2a6912
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).Run.func1:broadcast-queue.go:69 [0mbroadcast queue receive broadcast block
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:83 [0mreceive broadcast block
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:85 [0mneighbors all: []
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:99 [0mneighbors to send: map[]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoBroadcastQueue).broadcastBlockSend:broadcast-queue.go:110 [0mbroadcast send done.
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoStorage).Add:storage.go:158 [0mmain chain: [0xc0003e20a0 0xc000272320 0xc0002726e0]
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoStorage).Add:storage.go:173 [0mupdate balance end.
+[0;35m[DEBUG] [0m[0;34m2020/12/02 20:51:25 [0m[0;33mgithub.com/XieGuochao/HippoCoin/host.(*HippoStorage).Add:storage.go:174 [0mbalance: map[1f948f915f8d705e89797785951a15e76d551e89cc7fb684c62dc5be|d1d38af8a2d0097f390435b662f361b672980cbdeeea515348757f99:30000000000]

@@ -45,6 +45,8 @@ type Host interface {
 
 	AllHashesInLevel() map[int][]string
 	AllBlocks() map[string]Block
+	Address() string
+	PublicKey() string
 
 	GetLoggers() (*log.Logger, *log.Logger)
 	Close()
@@ -274,6 +276,12 @@ func (host *HippoHost) AllBlocks() map[string]Block {
 	}
 	return nil
 }
+
+// Address ...
+func (host *HippoHost) Address() string { return host.address }
+
+// PublicKey ...
+func (host *HippoHost) PublicKey() string { return host.key.ToAddress() }
 
 // GetLoggers ...
 func (host *HippoHost) GetLoggers() (*log.Logger, *log.Logger) {

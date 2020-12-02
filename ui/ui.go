@@ -21,7 +21,17 @@ type UI struct {
 type UIBlock struct {
 	Hash         string
 	ParentHash   string
-	Transactions []host.Transaction
+	Transactions []UITransaction
+}
+
+// UITransaction ...
+type UITransaction struct {
+	SenderAddreesses  []string
+	SenderAmounts     []uint64
+	ReceiverAddresses []string
+	ReceiverAmounts   []uint64
+	Fee               uint64
+	TimeStamp         int64
 }
 
 // New ...
@@ -31,6 +41,53 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 	u.h = h
 	u.r = gin.Default()
 	u.r.LoadHTMLGlob("./templates/*")
+
+	u.r.Use(func(c *gin.Context) {
+		if u.h != nil {
+			c.Set("public-key", u.h.PublicKey())
+			c.Set("address", u.h.Address())
+		} else {
+			c.Set("public-key", "no public key")
+			c.Set("address", "no address")
+		}
+
+	})
+
+	u.r.GET("/block/:hash", func(c *gin.Context) {
+		hash := c.Param("hash")
+		var blocks map[string]host.Block
+		if u.h == nil {
+			c.String(500, "no host connected")
+			return
+		}
+		blocks = u.h.AllBlocks()
+		if b, has := blocks[hash]; !has {
+			c.Status(404)
+			return
+		} else {
+			block := UIBlock{
+				Hash:       b.Hash(),
+				ParentHash: b.ParentHash(),
+			}
+			trs := b.GetTransactions()
+			block.Transactions = make([]UITransaction, len(trs))
+			for i, tr := range trs {
+				block.Transactions[i] = UITransaction{
+					Fee:       tr.GetFee(),
+					TimeStamp: tr.GetTimestamp(),
+				}
+				block.Transactions[i].SenderAddreesses, block.Transactions[i].SenderAmounts = tr.GetSender()
+				block.Transactions[i].ReceiverAddresses, block.Transactions[i].ReceiverAmounts = tr.GetReceiver()
+
+			}
+			c.HTML(200, "block.html", gin.H{
+				"block":        block,
+				"transactions": block.Transactions,
+				"publicKey":    c.GetString("public-key"),
+				"address":      c.GetString("address"),
+			})
+		}
+	})
 
 	u.r.GET("/", func(c *gin.Context) {
 		var levelHashes map[int][]string
@@ -74,9 +131,12 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 		}
 
 		c.HTML(200, "index.html", gin.H{
-			"levels": levels,
+			"levels":    levels,
+			"publicKey": c.GetString("public-key"),
+			"address":   c.GetString("address"),
 		})
 	})
+
 }
 
 // Main ...
