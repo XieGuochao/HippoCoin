@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"crypto/elliptic"
 
 	"github.com/withmandala/go-log"
 
 	"os"
-	"strconv"
 
 	. "github.com/XieGuochao/HippoCoin/host"
 )
@@ -24,29 +22,32 @@ func initLogger() {
 
 func main() {
 	var (
-		host           Host
-		ctx            context.Context
-		cancel         context.CancelFunc
-		miningInterval int64
-		msi            int
-		err            error
+		host   Host
+		ctx    context.Context
+		cancel context.CancelFunc
+
+		config     HippoConfig
+		configPath string
 	)
-	ms := os.Args[1]
-	msi, err = strconv.Atoi(ms)
-	if err != nil {
-		msi = 30
+	if len(os.Args) == 1 {
+		configPath = "./host.yml"
+	} else {
+		configPath = os.Args[1]
 	}
-	miningInterval = int64(msi)
+
+	config.Load(configPath)
+
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 	host = new(HippoHost)
 	host.InitLogger(true)
-	host.New(true, elliptic.P224(), true)
+	host.New(true, config.curve, true)
 
-	host.InitLocals(ctx, Hash, new(SingleMiningFunction), 1,
-		new(P2PClient), 10, MiningCallbackBroadcastSave,
-		BasicDifficulty, miningInterval, 5, 600, "tcp")
-	host.InitNetwork(new(HippoBlock), 5, 4, 1,
-		"localhost:9325", "tcp")
+	host.InitLocals(ctx, Hash, config.miningFunction, 1,
+		new(P2PClient), uint(config.BroadcastQueueLen), MiningCallbackBroadcastSave,
+		BasicDifficulty, int64(config.MiningInterval), config.MiningCapacity,
+		int64(config.MiningTTL), config.Protocol)
+	host.InitNetwork(new(HippoBlock), config.MaxNeighbors, config.UpdateTimeBase, config.UpdateTimeRand,
+		config.RegisterAddress, config.RegisterProtocol)
 	host.Run()
 }

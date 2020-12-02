@@ -14,7 +14,7 @@ type MiningFunction interface {
 	Solve(ctx context.Context, block HippoBlock) (result bool, newBlock HippoBlock)
 }
 
-// single mining
+// SingleMiningFunction ...
 type SingleMiningFunction struct {
 	// block        HippoBlock
 	hashFunction HashFunction
@@ -43,26 +43,26 @@ func (m *SingleMiningFunction) Solve(ctx context.Context,
 }
 
 // multiple mining
-type multipleMiningFunction struct {
+type MultipleMiningFunction struct {
 	hashFunction HashFunction
 	threads      int
 	seed         int64
 }
 
-func (m *multipleMiningFunction) New(hashFunction HashFunction, threads int) {
+func (m *MultipleMiningFunction) New(hashFunction HashFunction, threads int) {
 	m.hashFunction, m.threads = hashFunction, threads
 	logger.Debug("use multiple mining:", threads)
 }
 
-func (m *multipleMiningFunction) SetThreads(threads int) {
+func (m *MultipleMiningFunction) SetThreads(threads int) {
 	m.threads = threads
 }
 
-func (m *multipleMiningFunction) SetSeed(seed int64) {
+func (m *MultipleMiningFunction) SetSeed(seed int64) {
 	m.seed = seed
 }
 
-func (m *multipleMiningFunction) Solve(ctx context.Context, block HippoBlock) (result bool, newBlock HippoBlock) {
+func (m *MultipleMiningFunction) Solve(ctx context.Context, block HippoBlock) (result bool, newBlock HippoBlock) {
 	wg := new(sync.WaitGroup)
 	wg.Add(m.threads)
 	var once sync.Once

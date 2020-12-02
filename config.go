@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/XieGuochao/HippoCoin/host"
 	"gopkg.in/yaml.v2"
 )
 
@@ -12,10 +13,12 @@ import (
 type HippoConfig struct {
 	Curve             string `yaml:"curve"`
 	curve             elliptic.Curve
-	MiningThreads     int    `yaml:"mining-threads"`
+	MiningThreads     int `yaml:"mining-threads"`
+	miningFunction    host.MiningFunction
 	BroadcastQueueLen int    `yaml:"broadcast-queue-len"`
 	MiningCapacity    int    `yaml:"mining-capacity"`
 	MiningInterval    int    `yaml:"mining-interval"`
+	MiningTTL         int    `yaml:"mining-ttl"`
 	Protocol          string `yaml:"protocol"`
 
 	MaxNeighbors   int `yaml:"max-neighbors"`
@@ -24,6 +27,8 @@ type HippoConfig struct {
 
 	RegisterAddress  string `yaml:"register-address"`
 	RegisterProtocol string `yaml:"register-protocol"`
+
+	DebugPath string `yaml:"debug-path"`
 }
 
 // Load ...
@@ -47,5 +52,10 @@ func (config *HippoConfig) Load(path string) *HippoConfig {
 		config.curve = elliptic.P224()
 	}
 
+	if config.MiningThreads <= 1 {
+		config.miningFunction = new(host.SingleMiningFunction)
+	} else {
+		config.miningFunction = new(host.MultipleMiningFunction)
+	}
 	return config
 }
