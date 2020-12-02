@@ -7,10 +7,12 @@ mining-ttl: 600
 protocol: tcp
 
 max-neighbors: 5
-update-time-base: 5
-update-time-rand: 3
+update-time-base: 30
+update-time-rand: 10
 
 register-address: 127.0.0.1:9325
 register-protocol: tcp
 
 debug-file-template: ./host1-%s.out
+
+ui-port: 8080

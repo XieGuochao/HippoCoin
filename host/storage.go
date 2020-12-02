@@ -28,6 +28,7 @@ type Storage interface {
 	Count() int
 	AllHashes() []string
 	AllHashesInLevel() map[int][]string
+	AllBlocks() map[string]Block
 
 	SetMiningCancel(cancelFunc context.CancelFunc)
 	CheckMiningCancel(level int) bool
@@ -412,6 +413,17 @@ func (storage *HippoStorage) AllHashesInLevel() map[int][]string {
 		}
 	}
 	return newMap
+}
+
+// AllBlocks ...
+func (storage *HippoStorage) AllBlocks() map[string]Block {
+	storage.LockBlock()
+	defer storage.UnlockBlock()
+	var newBlocks = make(map[string]Block)
+	for k, v := range storage.blocks {
+		newBlocks[k] = v
+	}
+	return newBlocks
 }
 
 // EncodeBlocks ...

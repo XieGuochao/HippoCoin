@@ -6,6 +6,8 @@ import (
 	"crypto/sha256"
 	"sync"
 
+	"github.com/withmandala/go-log"
+
 	registerlib "github.com/XieGuochao/HippoCoinRegister/lib"
 )
 
@@ -41,6 +43,10 @@ type Host interface {
 		registerProtocol string,
 	)
 
+	AllHashesInLevel() map[int][]string
+	AllBlocks() map[string]Block
+
+	GetLoggers() (*log.Logger, *log.Logger)
 	Close()
 }
 
@@ -250,4 +256,26 @@ func (host *HippoHost) Close() {
 func Hash(key []byte) []byte {
 	bytes := sha256.Sum256(key)
 	return bytes[:]
+}
+
+// AllHashesInLevel ...
+func (host *HippoHost) AllHashesInLevel() map[int][]string {
+	if host.storage != nil {
+		return host.storage.AllHashesInLevel()
+	} else {
+		return nil
+	}
+}
+
+// AllBlocks ...
+func (host *HippoHost) AllBlocks() map[string]Block {
+	if host.storage != nil {
+		return host.storage.AllBlocks()
+	}
+	return nil
+}
+
+// GetLoggers ...
+func (host *HippoHost) GetLoggers() (*log.Logger, *log.Logger) {
+	return debugLogger, infoLogger
 }

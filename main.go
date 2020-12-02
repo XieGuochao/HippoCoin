@@ -10,6 +10,7 @@ import (
 	"os"
 
 	. "github.com/XieGuochao/HippoCoin/host"
+	"github.com/XieGuochao/HippoCoin/ui"
 )
 
 var version = "1.0"
@@ -18,6 +19,8 @@ var (
 	debugLogger *log.Logger
 	debugFile   *os.File
 	infoLogger  *log.Logger
+
+	u ui.UI
 )
 
 func initLogger(debugPath string) {
@@ -66,6 +69,7 @@ func main() {
 	t := time.Now().Format("2006-01-02-15-04-05")
 	host.New(true, fmt.Sprintf(config.DebugFileTemplate, t), config.curve, true)
 	host.InitLogger(true)
+	debugLogger, infoLogger = host.GetLoggers()
 
 	fmt.Println("output to debug file:", t+"-debug.out")
 
@@ -75,5 +79,9 @@ func main() {
 		int64(config.MiningTTL), config.Protocol)
 	host.InitNetwork(new(HippoBlock), config.MaxNeighbors, config.UpdateTimeBase, config.UpdateTimeRand,
 		config.RegisterAddress, config.RegisterProtocol)
+
+	u.New(debugLogger, infoLogger, host)
+	u.Main(config.UIPort)
+
 	host.Run()
 }
