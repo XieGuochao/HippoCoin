@@ -109,7 +109,7 @@ func TestMiningMultipleOK(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	testMiningFunction = new(multipleMiningFunction)
+	testMiningFunction = new(MultipleMiningFunction)
 	testMiningFunction.New(testHashfunction, 4)
 
 	miningQueue := new(MiningQueue)

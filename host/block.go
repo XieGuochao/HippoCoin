@@ -326,6 +326,7 @@ func DecodeBlock(bytes []byte, tempalteBlock Block) Block {
 type DifficultyFunc func(block Block, storage Storage,
 	baseInterval int64) uint
 
+// BasicDifficulty ...
 func BasicDifficulty(block Block, storage Storage,
 	baseInterval int64) uint {
 	lastInterval := storage.GetLastInterval()

@@ -22,15 +22,18 @@ type SingleMiningFunction struct {
 	seed         int64
 }
 
+// New ...
 func (m *SingleMiningFunction) New(hashFunction HashFunction, threads int) {
 	m.hashFunction = hashFunction
 	debugLogger.Debug("use single mining")
 }
 
+// SetSeed ...
 func (m *SingleMiningFunction) SetSeed(seed int64) {
 	m.seed = seed
 }
 
+// Solve ...
 func (m *SingleMiningFunction) Solve(ctx context.Context,
 	block HippoBlock) (result bool, newBlock HippoBlock) {
 	found, nonce := mineBase(ctx, block.HashSignatureBytes(), block.NumBytes,
@@ -42,26 +45,30 @@ func (m *SingleMiningFunction) Solve(ctx context.Context,
 	return false, HippoBlock{}
 }
 
-// multiple mining
+// MultipleMiningFunction ...
 type MultipleMiningFunction struct {
 	hashFunction HashFunction
 	threads      int
 	seed         int64
 }
 
+// New ...
 func (m *MultipleMiningFunction) New(hashFunction HashFunction, threads int) {
 	m.hashFunction, m.threads = hashFunction, threads
 	debugLogger.Debug("use multiple mining:", threads)
 }
 
+// SetThreads ...
 func (m *MultipleMiningFunction) SetThreads(threads int) {
 	m.threads = threads
 }
 
+// SetSeed ...
 func (m *MultipleMiningFunction) SetSeed(seed int64) {
 	m.seed = seed
 }
 
+// Solve ...
 func (m *MultipleMiningFunction) Solve(ctx context.Context, block HippoBlock) (result bool, newBlock HippoBlock) {
 	wg := new(sync.WaitGroup)
 	wg.Add(m.threads)
