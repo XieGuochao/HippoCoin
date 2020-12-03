@@ -44,6 +44,7 @@ type Block interface {
 	GetLevel() int
 	GetBalanceChange() map[string]int64
 	GetTimestamp() int64
+	GetMiner() string
 
 	Encode() []byte
 }
@@ -242,6 +243,11 @@ func (b *HippoBlock) GetBalanceChange() map[string]int64 {
 
 // GetTimestamp ...
 func (b *HippoBlock) GetTimestamp() int64 { return b.Timestamp }
+
+// GetMiner ...
+func (b *HippoBlock) GetMiner() string { return b.MinerAddress }
+
+// =============================================================
 
 // CreateGenesisBlock ...
 func CreateGenesisBlock(hashFunction HashFunction,

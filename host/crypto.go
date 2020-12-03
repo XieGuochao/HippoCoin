@@ -119,6 +119,21 @@ func (k *Key) CheckSignString(hash string, sig string) bool {
 	return k.CheckSign(h, s)
 }
 
+// PrivateKeyString ...
+func (k *Key) PrivateKeyString() string {
+	return KeyToHexString(k.key)
+}
+
+// LoadPrivateKeyString ...
+func (k *Key) LoadPrivateKeyString(priString string) error {
+	key, err := HexStringToKey(priString)
+	if err != nil {
+		return err
+	}
+	k.key = key
+	return nil
+}
+
 // ========================================================
 
 // GenerateKey ...
@@ -151,14 +166,33 @@ func publicKeyToAddress(publicKey ecdsa.PublicKey) string {
 
 // keyPairToByte ...
 func keyToByte(privateKey *ecdsa.PrivateKey) (priByte []byte) {
+	if privateKey == nil {
+		return []byte{}
+	}
 	priByte, _ = x509.MarshalECPrivateKey(privateKey)
 	return
+}
+
+// KeyToHexString ...
+func KeyToHexString(privateKey *ecdsa.PrivateKey) (priString string) {
+	priByte := keyToByte(privateKey)
+	return ByteToHexString(priByte)
 }
 
 // byteToKey ...
 func byteToKey(priByte []byte) (privateKey *ecdsa.PrivateKey, err error) {
 	privateKey, err = x509.ParseECPrivateKey(priByte)
 	return
+}
+
+// HexStringToKey ...
+func HexStringToKey(priString string) (privateKey *ecdsa.PrivateKey, err error) {
+	var priBytes []byte
+	priBytes, err = StringToByte(priString)
+	if err != nil {
+		return
+	}
+	return byteToKey(priBytes)
 }
 
 // stringToPublicKey ...

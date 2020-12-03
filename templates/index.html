@@ -30,9 +30,9 @@
         <hr>
 
         <h3>My Key:</h3>
-        <p>{{.publicKey}}</p>
+        <p><i>{{.publicKey}}</i></p>
         <hr>
-        
+
         <h3>Local Storage</h3>
         <ul>
             {{range $i, $onelevel := .levels}}
@@ -40,11 +40,20 @@
             <ul>
                 {{range $_, $b := $onelevel}}
                 <li>
-                    <a href="/block/{{ $b.Hash }}" >{{ $b.Hash }}</a> 👉 
-                    <a href="/block/{{ $b.ParentHash }}" >{{ $b.ParentHash }}</a>
+                    <a href="/block/{{ $b.Hash }}">{{ $b.Hash }}</a> 👉
+                    <a href="/block/{{ $b.ParentHash }}">{{ $b.ParentHash }}</a>
                 </li>
                 {{end}}
             </ul>
+            {{end}}
+        </ul>
+
+        <hr>
+        
+        <h3>Balances</h3>
+        <ul>
+            {{range $address, $b := .balance}}
+            <li> <i>{{$address}}</i> : {{$b}}</li>
             {{end}}
         </ul>
     </div>

@@ -7,7 +7,7 @@ mining-ttl: 600
 protocol: tcp
 
 max-neighbors: 5
-update-time-base: 30
+update-time-base: 10
 update-time-rand: 10
 
 register-address: 127.0.0.1:9325

@@ -47,6 +47,10 @@ type Host interface {
 	AllBlocks() map[string]Block
 	Address() string
 	PublicKey() string
+	PrivateKey() string
+	LoadPrivateKeyString(priString string) error
+
+	GetBalance() map[string]uint64
 
 	GetLoggers() (*log.Logger, *log.Logger)
 	Close()
@@ -281,6 +285,19 @@ func (host *HippoHost) Address() string { return host.address }
 
 // PublicKey ...
 func (host *HippoHost) PublicKey() string { return host.key.ToAddress() }
+
+// PrivateKey ...
+func (host *HippoHost) PrivateKey() string { return host.key.PrivateKeyString() }
+
+// LoadPrivateKeyString ...
+func (host *HippoHost) LoadPrivateKeyString(priString string) error {
+	return host.key.LoadPrivateKeyString(priString)
+}
+
+// GetBalance ...
+func (host *HippoHost) GetBalance() map[string]uint64 {
+	return host.balance.AllBalance()
+}
 
 // GetLoggers ...
 func (host *HippoHost) GetLoggers() (*log.Logger, *log.Logger) {

@@ -18,44 +18,29 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"
         integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
         crossorigin="anonymous"></script>
-    <title>Block HippoCoin {{.block.Hash}}</title>
+    <title>Hello HippoCoin</title>
 </head>
 
 <body>
     <div class="container-fluid">
-        <h1>Hello, <i>HippoCoin Block </i> </h1>
-        <h3>Level <b>{{.block.Level}}</b>: {{.block.Hash}}</h3>
-        <p>Miner: <i>{{.block.Miner}}</i></p>
+        <h1>Hello, <i>HippoCoin</i> Web Client!</h1>
         <hr>
- 
         <h3>My Address:</h3>
         <p>{{.address}}</p>
         <hr>
 
-        <h3>My Key:</h3>
+        <h3>My Public Key:</h3>
         <p>{{.publicKey}}</p>
         <hr>
-        
-        <p>Parent Hash:  <a href="/block/{{ .block.ParentHash }}" >{{ .block.ParentHash }}</a></p>
-        <ul>
-            {{range $i, $tr := .Transactions}}
-            <h5>{{$i}}</h5>
-            <p>
-                {{$tr.Timestamp}}
-            </p>
-            <ol>
-                {{range $_, $address := $tr.SenderAddresses}}
-                <li>{{$address}}</li>
-                {{end}}
-            </ol>
-            <ol>
-                {{range $_, $amount := $tr.SenderAmounts}}
-                <li>{{$amount}}</li>
-                {{end}}
-            </ol>
-            <p>Fee: {{$tr.Fee}}</p>
-            {{end}}
-        </ul>
+
+        <h3>My Private Key:</h3>
+        <p>{{.privateKey}}</p>
+        <hr>
+
+        <h3>My Balance:</h3>
+        <p>{{.myBalance}}</p>
+        <hr>
+
     </div>
 </body>
 
