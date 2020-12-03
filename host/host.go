@@ -264,9 +264,8 @@ func Hash(key []byte) []byte {
 func (host *HippoHost) AllHashesInLevel() map[int][]string {
 	if host.storage != nil {
 		return host.storage.AllHashesInLevel()
-	} else {
-		return nil
 	}
+	return nil
 }
 
 // AllBlocks ...

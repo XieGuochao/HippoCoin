@@ -22,7 +22,7 @@ func initLogger(debugPath string) {
 	} else {
 		debugFile, err = os.Create(debugPath)
 		if err != nil {
-			fmt.Errorf("error: %s", err)
+			_ = fmt.Errorf("error: %s", err)
 			return
 		}
 		fmt.Println("create debug file:", debugFile)
