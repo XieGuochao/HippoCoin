@@ -93,7 +93,7 @@ func (m *MiningQueue) main() {
 			result, newBlock := m.miningFunc.Solve(m.context, block)
 			infoLogger.Debug("mining:", result)
 			if result {
-				infoLogger.Debug("mining result:", newBlock.Hash())
+				infoLogger.Info("mining success result:", newBlock.Hash())
 			}
 			m.callback(result, &newBlock, m.storage, m.broadcastQueue)
 			infoLogger.Debug("mining continue to mine:")

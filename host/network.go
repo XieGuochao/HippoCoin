@@ -119,6 +119,8 @@ type NetworkClient interface {
 	SetSyncBlockCount(count int)
 	StartSyncBlocks(storage Storage)
 	StopSyncBlocks()
+
+	SetSyncPeriod(int64)
 }
 
 // HippoNetworkClient ...
@@ -138,6 +140,8 @@ type HippoNetworkClient struct {
 	p2pClient           P2PClientInterface
 	maxPing             int64
 
+	syncBlockPeriod int64
+
 	networkPool NetworkPool
 
 	templateBlock Block
@@ -156,6 +160,8 @@ func (c *HippoNetworkClient) New(ctx context.Context, address string, protocol s
 	c.p2pClient = p2pClient
 	c.maxPing = 1e4 // 10 seconds
 	c.syncBlockCount = 5
+
+	c.syncBlockPeriod = 5
 
 	c.templateBlock = templateBlock
 
@@ -318,6 +324,8 @@ func (c *HippoNetworkClient) QueryLevel(address string, level0,
 				ok = true
 				done <- nil
 				return
+			} else {
+				c.networkPool.Update(address)
 			}
 		}
 		infoLogger.Error(err)
@@ -476,7 +484,7 @@ func (c *HippoNetworkClient) StartSyncBlocks(storage Storage) {
 				return
 			default:
 				go c.SyncAddressesN(c.syncBlockCount, storage)
-				time.Sleep(time.Second * time.Duration(10))
+				time.Sleep(time.Second * time.Duration(c.syncBlockPeriod))
 			}
 		}
 	}()
@@ -557,3 +565,6 @@ func (c *HippoNetworkClient) StopSyncNeighbors() {
 
 // GetAddress ...
 func (c *HippoNetworkClient) GetAddress() string { return c.address }
+
+// SetSyncPeriod ...
+func (c *HippoNetworkClient) SetSyncPeriod(p int64) { c.syncBlockPeriod = p }

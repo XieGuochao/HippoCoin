@@ -104,6 +104,7 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 		broadcastBlock BroadcastBlock
 		block          Block
 	)
+	broadcastBlock.Block = s.blockTemplate
 	// debugLogger.Debug("receive bytes:", sendBlockByte)
 	receiveBlock.Decode(&broadcastBlock)
 	// debugLogger.Debug("receive block:", broadcastBlock)

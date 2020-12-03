@@ -2,6 +2,9 @@ package ui
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/withmandala/go-log"
 
@@ -70,6 +73,179 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 			myBalance = 0
 		}
 		c.HTML(200, "myaccount.html", gin.H{
+			"address":    c.GetString("address"),
+			"privateKey": c.GetString("private-key"),
+			"publicKey":  c.GetString("public-key"),
+			"myBalance":  myBalance,
+		})
+	})
+
+	u.r.POST("/transfer-post", func(c *gin.Context) {
+		var (
+			senderAddreesses  []string
+			senderAmounts     []uint64
+			senderKeys        []host.Key
+			receiverAddresses []string
+			receiverAmounts   []uint64
+			// fee               uint64
+
+			numSenders   = 0
+			numReceivers = 0
+
+			err error
+		)
+		c.MultipartForm()
+
+		for key, value := range c.Request.PostForm {
+			infoLogger.Info(key, value)
+		}
+
+		// First, iterate through sender amounts and receiver amounts to determine size.
+		for key, value := range c.Request.PostForm {
+			switch {
+			case len(value) == 0 || value[0] == "0":
+				continue
+			case strings.Contains(key, "sender-amount-"):
+				v, err := strconv.Atoi(key[len("sender-amount-"):])
+				if err != nil {
+					infoLogger.Error("transfer-post error:", err)
+					c.Error(err)
+					return
+				}
+				if v > numSenders {
+					numSenders = v
+				}
+			case strings.Contains(key, "receiver-amount-"):
+				v, err := strconv.Atoi(key[len("receiver-amount-"):])
+				if err != nil {
+					infoLogger.Error("transfer-post error:", err)
+					c.Error(err)
+					return
+				}
+				if v > numReceivers {
+					numReceivers = v
+				}
+			}
+		}
+
+		numSenders++
+		numReceivers++
+
+		senderAddreesses = make([]string, 0)
+		senderAmounts = make([]uint64, 0)
+		senderKeys = make([]host.Key, 0)
+
+		receiverAddresses = make([]string, 0)
+		receiverAmounts = make([]uint64, 0)
+
+		// feeStr := c.Request.FormValue("fee")
+		// feeInt, _ := strconv.Atoi(feeStr)
+		// fee = uint64(feeInt)
+
+		for i := 0; i < numSenders; i++ {
+			var key, value string
+			key = fmt.Sprintf("sender-addr-%d", i)
+			if value = c.Request.PostFormValue(key); value == "" {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+			senderAddreesses = append(senderAddreesses, value)
+
+			key = fmt.Sprintf("sender-amount-%d", i)
+			if value = c.Request.PostFormValue(key); value == "" {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+			if amount, err := strconv.Atoi(value); err != nil {
+				infoLogger.Error("transfer-post error:", err)
+				c.Error(err)
+				return
+			} else {
+				senderAmounts = append(senderAmounts, uint64(amount))
+			}
+
+			key = fmt.Sprintf("sender-key-%d", i)
+			if value = c.Request.PostFormValue(key); value == "" {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+			senderKey := host.Key{}
+			if err = senderKey.LoadPrivateKeyString(value, h.GetCurve()); err != nil {
+				infoLogger.Error("transfer-post error:", err)
+				c.Error(err)
+				return
+			}
+			infoLogger.Info("sender key:", senderKey, senderKey.Key().Curve)
+			senderKeys = append(senderKeys, senderKey)
+		}
+
+		for i := 0; i < numReceivers; i++ {
+			var key, value string
+			key = fmt.Sprintf("receiver-addr-%d", i)
+			if value = c.Request.PostFormValue(key); value == "" {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+			receiverAddresses = append(receiverAddresses, value)
+
+			key = fmt.Sprintf("receiver-amount-%d", i)
+			if value = c.Request.PostFormValue(key); value == "" {
+				c.AbortWithStatus(http.StatusBadRequest)
+				return
+			}
+			if amount, err := strconv.Atoi(value); err != nil {
+				infoLogger.Error("transfer-post error:", err)
+				c.Error(err)
+				return
+			} else {
+				receiverAmounts = append(receiverAmounts, uint64(amount))
+			}
+		}
+
+		var newTransaction host.Transaction
+		var ok bool
+		newTransaction = new(host.HippoTransaction)
+		newTransaction.New(h.GetHashFunction(), h.GetCurve())
+		if ok = newTransaction.SetSender(senderAddreesses, senderAmounts); !ok {
+			c.AbortWithStatus(http.StatusBadRequest)
+			infoLogger.Error("ui: transfer-post set senders failed.")
+			return
+		}
+		if ok = newTransaction.SetReceiver(receiverAddresses, receiverAmounts); !ok {
+			c.AbortWithStatus(http.StatusBadRequest)
+			infoLogger.Error("ui: transfer-post set receivers failed.")
+			return
+		}
+		for _, key := range senderKeys {
+			if ok = newTransaction.Sign(key); !ok {
+				c.AbortWithStatus(http.StatusBadRequest)
+				infoLogger.Error("ui: transfer-post sign failed.")
+				return
+			}
+		}
+
+		if ok = h.AddTransaction(newTransaction); !ok {
+			c.AbortWithStatus(http.StatusBadRequest)
+			infoLogger.Error("ui: transfer-post transaction check failed.")
+			return
+		}
+
+		infoLogger.Info("transfer-post success")
+		c.String(200, "OK")
+	})
+
+	u.r.GET("/transfer", func(c *gin.Context) {
+		var balance = make(map[string]uint64)
+		balanceInterface, has := c.Get("balance")
+		if has {
+			balance = balanceInterface.(map[string]uint64)
+		}
+
+		myBalance, has := balance[c.GetString("public-key")]
+		if !has {
+			myBalance = 0
+		}
+		c.HTML(200, "transfer.html", gin.H{
 			"address":    c.GetString("address"),
 			"privateKey": c.GetString("private-key"),
 			"publicKey":  c.GetString("public-key"),

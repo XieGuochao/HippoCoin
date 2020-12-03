@@ -14,7 +14,7 @@ type TransactionPool interface {
 	New(balance Balance)
 	Lock()
 	Unlock()
-	Push(t HippoTransaction) bool
+	Push(t Transaction) bool
 	Pop() Transaction
 	Len() int
 	Fetch(n int, checkFunc transactionPoolCheck) (result []Transaction)
@@ -33,6 +33,7 @@ type HippoTransactionPool struct {
 func (tp *HippoTransactionPool) New(balance Balance) {
 	heap.Init(&tp.heap)
 	tp.balance = balance
+	tp.hash = make(map[string]bool)
 }
 
 // Lock ...
@@ -49,7 +50,7 @@ func (tp *HippoTransactionPool) Unlock() {
 // Should pass the check first.
 // 1. Add to the transaction heap.
 // 2. Add to the hash map.
-func (tp *HippoTransactionPool) Push(t HippoTransaction) bool {
+func (tp *HippoTransactionPool) Push(t Transaction) bool {
 	if !t.Check(tp.balance) {
 		return false
 	}
@@ -69,6 +70,12 @@ func (tp *HippoTransactionPool) Push(t HippoTransaction) bool {
 func (tp *HippoTransactionPool) Pop() Transaction {
 	tp.Lock()
 	defer tp.Unlock()
+	return tp.PopUnsafe()
+}
+
+// PopUnsafe ...
+// Make sure you manually lock it first.
+func (tp *HippoTransactionPool) PopUnsafe() Transaction {
 	if len(tp.heap) == 0 {
 		return nil
 	}
@@ -87,18 +94,24 @@ type transactionPoolCheck func(t Transaction) bool
 // Fetch ...
 // Fetch a number of transactions.
 func (tp *HippoTransactionPool) Fetch(n int, checkFunc transactionPoolCheck) (result []Transaction) {
+	infoLogger.Warn("tp fetch before lock")
 	tp.Lock()
+	defer infoLogger.Warn("tp fetch unlocked")
 	defer tp.Unlock()
+	infoLogger.Warn("tp fetch after lock")
+
 	count := 0
 	result = make([]Transaction, n)
 	for count < n && tp.Len() > 0 {
-		b := tp.Pop()
-		if checkFunc(b) {
-			result[count] = b
+		t := tp.PopUnsafe()
+		infoLogger.Warn("pop a transaction:", t.Check(tp.balance))
+		if checkFunc(t) {
+			result[count] = t
 			count++
 		}
 	}
 	result = result[:count]
+	infoLogger.Info("transaction pool: fetch transactions:", count)
 	return
 }
 

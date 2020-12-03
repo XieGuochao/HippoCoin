@@ -79,7 +79,8 @@ func (m *HippoMining) SetBroadcastQueue(bq BroadcastQueue) { m.broadcastQueue = 
 func (m *HippoMining) Fetch(b Block) Block {
 	currentTime := time.Now().Unix()
 	transactions := m.transactionPool.Fetch(m.blockCapacity, func(t Transaction) bool {
-		if t.GetTimestamp()+m.TTL > currentTime {
+		// infoLogger.Warn(t.GetTimestamp(), m.TTL, currentTime)
+		if t.GetTimestamp()+m.TTL < currentTime {
 			return false
 		}
 		if _, has := m.minedHash.Load(t.Hash()); has {
@@ -124,7 +125,7 @@ func (m *HippoMining) WatchSendNewBlock() {
 				block = m.Fetch(block)
 
 				block.Sign(m.key)
-				infoLogger.Debug("block level:", block.GetLevel())
+				debugLogger.Debug("block level:", block.GetLevel())
 				m.Mine(block)
 			}
 		default:

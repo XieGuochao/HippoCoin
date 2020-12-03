@@ -38,6 +38,7 @@ func (m *SingleMiningFunction) Solve(ctx context.Context,
 	block HippoBlock) (result bool, newBlock HippoBlock) {
 	found, nonce := mineBase(ctx, block.HashSignatureBytes(), block.NumBytes,
 		m.hashFunction, block.Level, m.seed, 0)
+	infoLogger.Info("mining result:", nonce, found)
 	if found {
 		block.Nonce = nonce
 		return true, block

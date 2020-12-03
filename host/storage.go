@@ -97,6 +97,7 @@ func (storage *HippoStorage) SetBalance(balance Balance) { storage.balance = bal
 
 // Add ...
 func (storage *HippoStorage) Add(block Block) bool {
+	block.SetBalance(storage.balance)
 	if !block.Check() {
 		infoLogger.Error("block check failed:", block.Hash())
 		return false
@@ -343,7 +344,7 @@ func (storage *HippoStorage) GetMainChain() []Block {
 		if i > 0 {
 			block, has = storage.Get(block.ParentHash())
 			if !has {
-				infoLogger.Error("storage: get main chain failed:", block.ParentHash())
+				infoLogger.Error("storage: get main chain failed!")
 				return nil
 			}
 		}

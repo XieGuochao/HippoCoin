@@ -117,6 +117,9 @@ func (r *ReceiveBlock) Decode(b *BroadcastBlock) {
 		json.Unmarshal(bytes, &trs)
 		r.block.transactions = make([]Transaction, len(trs))
 		for i, tr := range trs {
+			tr.curve = b.Block.GetCurve()
+			tr.hashFunction = b.Block.GetHashFunction()
+			infoLogger.Warn("block:", tr, tr.curve, tr.hashFunction)
 			r.block.transactions[i] = &tr
 		}
 

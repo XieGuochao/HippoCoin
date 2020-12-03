@@ -31,8 +31,11 @@ type Transaction interface {
 	CheckSignatures() bool
 	Check(balance Balance) bool
 	Digest() string
+	DigestSignatures() string
 	HashBytes() []byte
 	Hash() string
+	HashSignatures() string
+	HashSignaturesBytes() []byte
 
 	GetTimestamp() int64
 	GetFee() uint64
@@ -237,6 +240,25 @@ func (t *HippoTransaction) Hash() string {
 	return ByteToHexString(t.HashBytes())
 }
 
+// DigestSignatures ...
+func (t *HippoTransaction) DigestSignatures() string {
+	var signatures = ""
+	for _, signature := range t.SenderSignatures {
+		signatures += "-" + signature
+	}
+	return t.Digest() + signatures
+}
+
+// HashSignaturesBytes ...
+func (t *HippoTransaction) HashSignaturesBytes() []byte {
+	return t.hashFunction([]byte(t.DigestSignatures()))
+}
+
+// HashSignatures ...
+func (t *HippoTransaction) HashSignatures() string {
+	return ByteToHexString(t.HashSignaturesBytes())
+}
+
 // GetTimestamp ...
 func (t *HippoTransaction) GetTimestamp() int64 { return t.Timestamp }
 
@@ -248,20 +270,24 @@ func (t *HippoTransaction) GetBalanceChange() map[string]int64 {
 	t.UpdateFee()
 	result := make(map[string]int64)
 	for i := range t.SenderAddresses {
-		if v, has := result[t.SenderAddresses[i]]; !has {
+		v := t.SenderAmounts[i]
+		if _, has := result[t.SenderAddresses[i]]; !has {
 			result[t.SenderAddresses[i]] = -int64(v)
 		} else {
-			result[t.SenderAddresses[i]] -= v
+			result[t.SenderAddresses[i]] -= int64(v)
 		}
 	}
 	for i := range t.ReceiverAddresses {
-		if v, has := result[t.ReceiverAddresses[i]]; !has {
+		v := t.SenderAmounts[i]
+
+		if _, has := result[t.ReceiverAddresses[i]]; !has {
 			result[t.ReceiverAddresses[i]] = int64(v)
 		} else {
-			result[t.ReceiverAddresses[i]] += v
+			result[t.ReceiverAddresses[i]] += int64(v)
 		}
 	}
 	result["fee"] = int64(t.Fee)
+	debugLogger.Debug("transaction: balance change:", result)
 	return result
 }
 

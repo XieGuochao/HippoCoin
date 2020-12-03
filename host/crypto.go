@@ -125,12 +125,13 @@ func (k *Key) PrivateKeyString() string {
 }
 
 // LoadPrivateKeyString ...
-func (k *Key) LoadPrivateKeyString(priString string) error {
+func (k *Key) LoadPrivateKeyString(priString string, curve elliptic.Curve) error {
 	key, err := HexStringToKey(priString)
 	if err != nil {
 		return err
 	}
 	k.key = key
+	k.publicKey = &key.PublicKey
 	return nil
 }
 

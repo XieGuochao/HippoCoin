@@ -51,6 +51,10 @@ type Host interface {
 	LoadPrivateKeyString(priString string) error
 
 	GetBalance() map[string]uint64
+	GetHashFunction() HashFunction
+	GetCurve() elliptic.Curve
+
+	AddTransaction(Transaction) bool
 
 	GetLoggers() (*log.Logger, *log.Logger)
 	Close()
@@ -291,7 +295,7 @@ func (host *HippoHost) PrivateKey() string { return host.key.PrivateKeyString() 
 
 // LoadPrivateKeyString ...
 func (host *HippoHost) LoadPrivateKeyString(priString string) error {
-	return host.key.LoadPrivateKeyString(priString)
+	return host.key.LoadPrivateKeyString(priString, host.curve)
 }
 
 // GetBalance ...
@@ -302,4 +306,21 @@ func (host *HippoHost) GetBalance() map[string]uint64 {
 // GetLoggers ...
 func (host *HippoHost) GetLoggers() (*log.Logger, *log.Logger) {
 	return debugLogger, infoLogger
+}
+
+// GetHashFunction ...
+func (host *HippoHost) GetHashFunction() HashFunction { return host.hashFunction }
+
+// GetCurve ...
+func (host *HippoHost) GetCurve() elliptic.Curve { return host.curve }
+
+// AddTransaction ...
+func (host *HippoHost) AddTransaction(tr Transaction) bool {
+	// if hippoTransaction, ok := tr.(*HippoTransaction)
+	// hippoTransaction, ok := tr.(*HippoTransaction)
+	// if !ok {
+	// 	infoLogger.Error("cannot transfer Transaction as *HippoTransaction")
+	// 	return false
+	// }
+	return host.transactionPool.Push(tr)
 }

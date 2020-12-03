@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSS only -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <!-- JS, Popper.js, and jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+    <title>Hello HippoCoin</title>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <h1>Hello, <i>HippoCoin</i> Web Client!</h1>
+        <hr>
+        <h3>My Address:</h3>
+        <p>{{.address}}</p>
+        <hr>
+
+        <h3>My Public Key:</h3>
+        <p>{{.publicKey}}</p>
+        <hr>
+
+        <h3>My Private Key:</h3>
+        <p>{{.privateKey}}</p>
+        <hr>
+
+        <h3>My Balance:</h3>
+        <p>{{.myBalance}}</p>
+        <hr>
+
+        <h3> Transfer </h3>
+
+
+        <form id="transfer-form" action="/transfer-post" method="POST">
+            <div class="row between">
+                <div id="transfer-sender" class="w-45">
+                    <div class="col left sender" id="send-0">
+                        <div>Sender 0</div>
+                        <div class="row">
+                            <div class="title">Public Key: </div>
+                            <input class="w-80" type="text" name="sender-addr-0" value="{{.publicKey}}">
+                        </div>
+                        <div class="row">
+                            <div class="title">Amount: </div>
+                            <input class="w-80" type="number" name="sender-amount-0" value="0">
+                        </div>
+                        <div class="row">
+                            <div class="title">Private Key: </div>
+                            <input class="w-80" type="text" name="sender-key-0" value="{{.privateKey}}">
+                        </div>
+                    </div>
+                    <hr>
+                </div>
+                <div id="transfer-receiver" class="w-45">
+                    <div class="col left receiver" id="recv-0">
+                        <div>Receiver 0</div>
+                        <div class="row">
+                            <div class="title">Public Key: </div>
+                            <input class="w-80" type="text" name="receiver-addr-0">
+                        </div>
+                        <div class="row">
+                            <div class="title">Amount: </div>
+                            <input class="w-80" type="number" name="receiver-amount-0" value="0">
+                        </div>
+                    </div>
+                    <hr>
+                </div>
+            </div>
+            <div class="row between">
+                <div id="transfer-fee-hidden">
+                </div>
+                <div id="transfer-fee" class="row">
+                    <div class="title">Fee: </div>
+                    <input class="w-80" type="number" value="0" name="fee">
+                </div>
+
+            </div>
+            <hr>
+            <div class="row between">
+                <button class="w-45" onclick="addSender(); return false">Add a sender</button>
+                <button class="w-45" onclick="addReceiver(); return false">Add a receiver</button>
+            </div>
+            <hr>
+            <div class="row between">
+                <button class="w-90" type="submit">Submit Transaction</button>
+            </div>
+        </form>
+
+    </div>
+    <script>
+
+        function addSender() {
+            const formObj = document.getElementById("transfer-sender");
+            const senders = document.getElementsByClassName("sender");
+            const maxID = senders.length;
+
+            let newSender = senders[0].cloneNode(true);
+            newSender.id = "sender-" + maxID;
+            newSender.children[0].textContent = "Sender " + maxID;
+
+            newSender.children[1].children[1].name = "sender-addr-" + maxID;
+            newSender.children[1].children[1].value = "";
+
+            newSender.children[2].children[1].name = "sender-amount-" + maxID;
+
+            newSender.children[3].children[1].name = "sender-key-" + maxID;
+            newSender.children[3].children[1].value = "";
+
+            formObj.appendChild(newSender);
+
+            const newHR = document.createElement("hr");
+            formObj.appendChild(newHR);
+            return false;
+        }
+
+        function addReceiver() {
+            const formObj = document.getElementById("transfer-receiver");
+            const receivers = document.getElementsByClassName("receiver");
+            const maxID = receivers.length;
+
+            let newReceiver = receivers[0].cloneNode(true);
+            newReceiver.id = "receiver-" + maxID;
+            newReceiver.children[0].textContent = "Receiver " + maxID;
+
+            newReceiver.children[1].children[1].name = "receiver-addr-" + maxID;
+            newReceiver.children[1].children[1].value = "";
+
+            newReceiver.children[2].children[1].name = "receiver-amount-" + maxID;
+
+            formObj.appendChild(newReceiver);
+
+            const newHR = document.createElement("hr");
+            formObj.appendChild(newHR);
+            return false;
+        }
+    </script>
+    <style>
+        #transfer {
+            display: flex;
+            flex-direction: column;
+        }
+
+        p {
+            max-width: 100vw;
+            word-break: break-word;
+        }
+
+        .left {
+            justify-content: left;
+        }
+
+        .w-80 {
+            width: 80%;
+        }
+
+        .w-45 {
+            width: 45%;
+        }
+
+        .w-90 {
+            width: 90%;
+        }
+
+        .w-100 {
+            width: 100%;
+        }
+
+        .between {
+            justify-content: space-evenly;
+        }
+
+        .row {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            margin-left: 10px;
+        }
+
+        input {
+            width: 100%
+        }
+
+        #transfer-sender {}
+
+        #transfer-receiver {}
+
+        #transfer-sender,
+        #transfer-receiver {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #transfer-fee,
+        #transfer-fee-hidden {
+            width: 45%;
+        }
+
+        .title {
+            width: 20%;
+        }
+    </style>
+</body>
+
+</html>

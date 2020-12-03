@@ -81,7 +81,7 @@ func (b *HippoBlock) Digest() string {
 	d := ""
 	d += fmt.Sprintf("%d|%d|", b.Timestamp, b.Level)
 	for _, t := range b.transactions {
-		d += "|" + t.Hash()
+		d += "|" + t.HashSignatures()
 	}
 	d += "|"
 	return d
@@ -190,15 +190,23 @@ func (b *HippoBlock) generateSignature(key Key) (string, error) {
 
 // CheckSignature ...
 func (b *HippoBlock) CheckSignature() bool {
-	var key Key
+	var (
+		result bool
+		key    Key
+	)
 	key.LoadPublicKeyString(b.MinerAddress, b.curve)
-	return key.CheckSignString(b.Hash(), b.Signature())
+
+	if result = key.CheckSignString(b.Hash(), b.Signature()); !result {
+		infoLogger.Error("signature check failed:", b.Hash())
+	}
+	return result
 }
 
 // CheckTransactions ...
 func (b *HippoBlock) CheckTransactions() bool {
 	for _, t := range b.transactions {
 		if !t.Check(b.balance) {
+			infoLogger.Error("transaction check failed:", b.Hash())
 			return false
 		}
 	}
@@ -207,12 +215,18 @@ func (b *HippoBlock) CheckTransactions() bool {
 
 // CheckNonce ...
 func (b *HippoBlock) CheckNonce() bool {
-	return checkNonce(b.HashSignatureBytes(), b.Nonce, b.NumBytes, b.hashFunction)
+	var (
+		result bool
+	)
+	if result = checkNonce(b.HashSignatureBytes(), b.Nonce, b.NumBytes, b.hashFunction); !result {
+		infoLogger.Error("nonce check failed:", b.Hash())
+	}
+	return result
 }
 
 // Check ...
 func (b *HippoBlock) Check() bool {
-	return b.CheckSignature() && b.CheckNonce() && b.CheckTransactions()
+	return b.CheckSignature() && b.CheckTransactions() && b.CheckNonce()
 }
 
 // GetLevel ...
