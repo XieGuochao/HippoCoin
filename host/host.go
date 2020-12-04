@@ -35,6 +35,7 @@ type Host interface {
 	)
 	InitNetwork(
 		blockTemplate Block,
+		transactionTemplate Transaction,
 		maxNeighbors int,
 		updateTimeBase int,
 		updateTimeRand int,
@@ -91,13 +92,14 @@ type HippoHost struct {
 
 	waitGroup sync.WaitGroup
 
-	balance         Balance
-	mining          Mining
-	miningQueue     MiningQueue
-	transactionPool TransactionPool
-	storage         Storage
-	broadcastQueue  BroadcastQueue
-	blockTemplate   Block
+	balance             Balance
+	mining              Mining
+	miningQueue         MiningQueue
+	transactionPool     TransactionPool
+	storage             Storage
+	broadcastQueue      BroadcastQueue
+	blockTemplate       Block
+	transactionTemplate Transaction
 
 	miningInterval int64
 	debugFile      string
@@ -169,7 +171,7 @@ func (host *HippoHost) InitLocals(
 	host.miningQueue.SetStorage(host.storage)
 
 	host.transactionPool = new(HippoTransactionPool)
-	host.transactionPool.New(host.balance)
+	host.transactionPool.New(host.balance, host.broadcastQueue)
 	host.mining.New(&host.miningQueue, host.transactionPool,
 		difficultyFunction, host.miningInterval, miningCapacity, miningTTL,
 		host.balance, host.key)
@@ -179,6 +181,7 @@ func (host *HippoHost) InitLocals(
 // InitNetwork ...
 func (host *HippoHost) InitNetwork(
 	blockTemplate Block,
+	transactionTemplate Transaction,
 	maxNeighbors int,
 	updateTimeBase int,
 	updateTimeRand int,
@@ -195,6 +198,9 @@ func (host *HippoHost) InitNetwork(
 	host.blockTemplate.New([]byte{}, 0, host.hashFunction,
 		0, host.balance, host.curve)
 
+	host.transactionTemplate = transactionTemplate
+	host.transactionTemplate.New(host.hashFunction, host.curve)
+
 	host.networkListener = new(HippoNetworkListener)
 	host.networkListener.New(host.ctx, host.IP, host.protocol)
 	host.networkListener.Listen()
@@ -209,6 +215,7 @@ func (host *HippoHost) InitNetwork(
 	host.P2PServer.setBroadcastQueue(host.broadcastQueue)
 	host.P2PServer.setStorage(host.storage)
 	host.P2PServer.setBlockTemplate(host.blockTemplate)
+	host.P2PServer.setTransactionTemplate(host.transactionTemplate)
 	host.P2PServer.serve()
 
 	host.registerAddress = registerAddress

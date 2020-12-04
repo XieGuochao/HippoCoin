@@ -77,7 +77,7 @@ func main() {
 		new(P2PClient), uint(config.BroadcastQueueLen), MiningCallbackBroadcastSave,
 		BasicDifficulty, int64(config.MiningInterval), config.MiningCapacity,
 		int64(config.MiningTTL), config.Protocol)
-	host.InitNetwork(new(HippoBlock), config.MaxNeighbors, config.UpdateTimeBase, config.UpdateTimeRand,
+	host.InitNetwork(new(HippoBlock), new(HippoTransaction), config.MaxNeighbors, config.UpdateTimeBase, config.UpdateTimeRand,
 		config.RegisterAddress, config.RegisterProtocol)
 
 	u.New(debugLogger, infoLogger, host)

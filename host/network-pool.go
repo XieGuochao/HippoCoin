@@ -38,6 +38,7 @@ func (n *NetworkPool) Get(address string) P2PClientInterface {
 			n.data.Store(address, client)
 		} else {
 			client = nil
+			infoLogger.Error("networkPool get:", err)
 		}
 	} else {
 		client = clientInterface.(P2PClientInterface)
@@ -65,6 +66,7 @@ func (n *NetworkPool) Update(address string) P2PClientInterface {
 		n.data.Store(address, client)
 	} else {
 		client = nil
+		infoLogger.Error("networkPool get:", err)
 	}
 
 	return client

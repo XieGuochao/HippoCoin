@@ -17,6 +17,7 @@ type BroadcastQueue interface {
 		maxBroadcastLevel uint)
 	SetNetworkClient(networkClient NetworkClient)
 	Add(b BroadcastBlock)
+	AddTransaction(t BroadcastTransaction)
 	Run()
 	Stop()
 	// BroadcastBlockSend(block BroadcastBlock)
@@ -24,12 +25,13 @@ type BroadcastQueue interface {
 
 // HippoBroadcastQueue ...
 type HippoBroadcastQueue struct {
-	ctx           context.Context
-	cancel        context.CancelFunc
-	channel       chan BroadcastBlock
-	networkClient NetworkClient
-	protocol      string
-	p2pClient     P2PClientInterface
+	ctx                context.Context
+	cancel             context.CancelFunc
+	channel            chan BroadcastBlock
+	transactionChannel chan BroadcastTransaction
+	networkClient      NetworkClient
+	protocol           string
+	p2pClient          P2PClientInterface
 
 	maxBroadcastLevel uint
 }
@@ -39,6 +41,7 @@ func (bq *HippoBroadcastQueue) New(ctx context.Context, protocol string,
 	p2pClient P2PClientInterface, maxBroadcastLevel uint) {
 	bq.ctx, bq.cancel = context.WithCancel(ctx)
 	bq.channel = make(chan BroadcastBlock, 10)
+	bq.transactionChannel = make(chan BroadcastTransaction, 10)
 	bq.protocol = protocol
 	bq.p2pClient = p2pClient
 	bq.maxBroadcastLevel = maxBroadcastLevel
@@ -53,7 +56,17 @@ func (bq *HippoBroadcastQueue) SetNetworkClient(networkClient NetworkClient) {
 func (bq *HippoBroadcastQueue) Add(b BroadcastBlock) {
 	if b.Level < bq.maxBroadcastLevel {
 		bq.channel <- b
-		debugLogger.Debug("broadcast queue add:", b.Block.Hash())
+		debugLogger.Debug("broadcastQueue add block:", b.Block.Hash())
+	}
+}
+
+// AddTransaction ...
+func (bq *HippoBroadcastQueue) AddTransaction(tr BroadcastTransaction) {
+	infoLogger.Warn("bq: add transction:", tr.transaction.Hash(), tr.Level)
+
+	if tr.Level < bq.maxBroadcastLevel {
+		bq.transactionChannel <- tr
+		debugLogger.Debug("broadcastQueue add transaction:", tr.transaction.Hash())
 	}
 }
 
@@ -69,6 +82,9 @@ func (bq *HippoBroadcastQueue) Run() {
 				debugLogger.Debug("broadcast queue receive broadcast block")
 
 				bq.broadcastBlockSend(block)
+			case tr := <-bq.transactionChannel:
+				infoLogger.Warn("broadcast queue receive broadcast transaction")
+				bq.broadcastTransactionSend(tr)
 			}
 		}
 	}()
@@ -101,11 +117,42 @@ func (bq *HippoBroadcastQueue) broadcastBlockSend(block BroadcastBlock) {
 		debugLogger.Debug("send broadcast block to", address)
 		var reply string
 		if bq.networkClient == nil {
-			infoLogger.Error("broadcast-queue: no netowrk client")
+			infoLogger.Error("broadcastQueue: no netowrk client")
 			break
 		}
 
 		bq.networkClient.BroadcastBlock(address, block, &reply)
 	}
 	debugLogger.Debug("broadcast send done.")
+}
+
+func (bq *HippoBroadcastQueue) broadcastTransactionSend(transaction BroadcastTransaction) {
+	debugLogger.Debug("receive broadcast transaction")
+	addresses := bq.networkClient.GetNeighbors()
+	debugLogger.Debug("neighbors all:", addresses)
+
+	addressesToSend := make(map[string]bool)
+	for _, address := range addresses {
+		addressesToSend[address] = true
+	}
+	for address := range transaction.Addresses {
+		delete(addressesToSend, address)
+	}
+	delete(addressesToSend, bq.networkClient.GetAddress())
+
+	for address := range addressesToSend {
+		transaction.Addresses[address] = true
+	}
+	debugLogger.Debug("neighbors to send:", addressesToSend)
+	for address := range addressesToSend {
+		debugLogger.Debug("send broadcast transaction to", address)
+		var reply string
+		if bq.networkClient == nil {
+			infoLogger.Error("broadcastQueue: no netowrk client")
+			break
+		}
+
+		bq.networkClient.BroadcastTransaction(address, transaction, &reply)
+	}
+	debugLogger.Debug("broadcast transaction send done.")
 }

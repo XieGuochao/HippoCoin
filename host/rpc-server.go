@@ -19,6 +19,7 @@ type P2PServiceInterface interface {
 	setStorage(Storage)
 	setBroadcastQueue(BroadcastQueue)
 	setBlockTemplate(block Block)
+	setTransactionTemplate(tr Transaction)
 	Ping(request string, reply *string) error
 	BroadcastBlock(sendBlockByte []byte, reply *string) error
 	QueryLevel(q QueryLevelStruct, reply *[]string) error
@@ -33,26 +34,32 @@ func RegisterP2PService(svc P2PServiceInterface) error {
 
 // P2PServer ...
 type P2PServer struct {
-	storage        Storage
-	broadcastQueue BroadcastQueue
-	ctx            context.Context
-	cancel         context.CancelFunc
-	listener       net.Listener
+	storage         Storage
+	broadcastQueue  BroadcastQueue
+	transactionPool TransactionPool
+	ctx             context.Context
+	cancel          context.CancelFunc
+	listener        net.Listener
 
-	blockTemplate Block
+	blockTemplate       Block
+	transactionTemplate Transaction
 }
 
 // new ...
 func (s *P2PServer) new(parentContext context.Context, listener net.Listener) {
 	s.ctx, s.cancel = context.WithCancel(parentContext)
 	s.listener = listener
-	infoLogger.Debug("register p2p server error:", RegisterP2PService(s))
+	if err := RegisterP2PService(s); err != nil {
+		infoLogger.Error("register p2p server error:", err)
+	}
 	rpc.HandleHTTP()
-	infoLogger.Debug("start serving HTTP")
+	infoLogger.Info("start serving HTTP")
 	go http.Serve(listener, nil)
 }
 
 func (s *P2PServer) setBlockTemplate(block Block) { s.blockTemplate = block }
+
+func (s *P2PServer) setTransactionTemplate(tr Transaction) { s.transactionTemplate = tr }
 
 // serve ...
 func (s *P2PServer) serve() {
@@ -64,7 +71,7 @@ func (s *P2PServer) serve() {
 				return
 			default:
 				conn, err := s.listener.Accept()
-				infoLogger.Debug("p2p server receive conn:", err)
+				infoLogger.Warn("p2p server receive conn:", err)
 				if err != nil {
 					infoLogger.Error("p2p server accept error:", err)
 				} else {
@@ -83,9 +90,11 @@ func (s *P2PServer) setBroadcastQueue(broadcastQueue BroadcastQueue) {
 	s.broadcastQueue = broadcastQueue
 }
 
+func (s *P2PServer) setTransactionPool(tp TransactionPool) { s.transactionPool = tp }
+
 // Ping ...
 func (s *P2PServer) Ping(request string, reply *string) error {
-	debugLogger.Debug("receive ping:", request)
+	infoLogger.Warn("receive ping:", request)
 	*reply = request
 	return nil
 }
@@ -129,6 +138,41 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 	if s.broadcastQueue != nil {
 		broadcastBlock.Level++
 		s.broadcastQueue.Add(broadcastBlock)
+	} else {
+		debugLogger.Debug("no broadcast queue in rpc server")
+	}
+
+	return nil
+}
+
+// BroadcastTransaction ...
+func (s *P2PServer) BroadcastTransaction(sendBlockByte []byte,
+	reply *string) error {
+	var receiveTransaction = BroadcastTransaction{
+		Addresses: make(map[string]bool),
+	}
+	receiveTransaction.Data = sendBlockByte
+	receiveTransaction.transaction = s.transactionTemplate.CloneConstants()
+	receiveTransaction.Decode()
+
+	// Check transaction
+	if !receiveTransaction.transaction.Check(s.blockTemplate.GetBalance()) {
+		*reply = "check fail"
+		infoLogger.Error("broadcast transaction received: check fail", receiveTransaction.transaction.Hash())
+		return nil
+	}
+
+	// If check transaction ok, add to transaction pool
+	if s.transactionPool != nil {
+		s.transactionPool.Push(receiveTransaction.transaction)
+	} else {
+		debugLogger.Error("no transaction pool in rpc server")
+	}
+
+	// and broadcast.
+	if s.broadcastQueue != nil {
+		receiveTransaction.Level++
+		s.broadcastQueue.AddTransaction(receiveTransaction)
 	} else {
 		debugLogger.Debug("no broadcast queue in rpc server")
 	}

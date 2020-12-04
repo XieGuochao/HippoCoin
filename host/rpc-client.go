@@ -29,6 +29,7 @@ type P2PClientInterface interface {
 
 	Ping(request string, reply *string) error
 	BroadcastBlock(data NetworkSendInterface, reply *string) error
+	BroadcastTransaction(data NetworkSendInterface, reply *string) error
 	QueryLevel(level0, level1 int, reply *[]string) error
 	QueryByHash(hashValue string) (block Block)
 	QueryHashes(hashes []string) (block []Block)
@@ -143,4 +144,10 @@ func (c *P2PClient) QueryHashes(hashes []string) (block []Block) {
 func (c *P2PClient) BroadcastBlock(data NetworkSendInterface, reply *string) error {
 	// debugLogger.Debug("broadcastBlock to send", data)
 	return c.c.Call(P2PServiceName+".BroadcastBlock", data.Encode(), reply)
+}
+
+// BroadcastTransaction ...
+func (c *P2PClient) BroadcastTransaction(data NetworkSendInterface, reply *string) error {
+	// debugLogger.Debug("broadcastBlock to send", data)
+	return c.c.Call(P2PServiceName+".BroadcastTransaction", data.Encode(), reply)
 }

@@ -11,7 +11,7 @@ import (
 // 2. Push(t)
 // 3. result := Fetch(n, checkFunc)
 type TransactionPool interface {
-	New(balance Balance)
+	New(balance Balance, bq BroadcastQueue)
 	Lock()
 	Unlock()
 	Push(t Transaction) bool
@@ -27,13 +27,15 @@ type HippoTransactionPool struct {
 	hash map[string]bool
 
 	balance Balance
+	bq      BroadcastQueue
 }
 
 // New ...
-func (tp *HippoTransactionPool) New(balance Balance) {
+func (tp *HippoTransactionPool) New(balance Balance, bq BroadcastQueue) {
 	heap.Init(&tp.heap)
 	tp.balance = balance
 	tp.hash = make(map[string]bool)
+	tp.bq = bq
 }
 
 // Lock ...
@@ -50,16 +52,30 @@ func (tp *HippoTransactionPool) Unlock() {
 // Should pass the check first.
 // 1. Add to the transaction heap.
 // 2. Add to the hash map.
+// 3. Broadcast.
 func (tp *HippoTransactionPool) Push(t Transaction) bool {
+	infoLogger.Warn("tp push:", t.Hash())
 	if !t.Check(tp.balance) {
 		return false
 	}
+	infoLogger.Warn("tp push check pass:", t.Hash())
 	tp.Lock()
 	defer tp.Unlock()
 	hash := t.Hash()
 	if _, has := tp.hash[hash]; !has {
 		tp.heap.Push(t)
 		tp.hash[t.Hash()] = true
+
+		if tp.bq != nil {
+			var broadcastTransaction = BroadcastTransaction{
+				transaction: t,
+				Level:       0,
+				Addresses:   make(map[string]bool),
+			}
+			tp.bq.AddTransaction(broadcastTransaction)
+		} else {
+			infoLogger.Warn("transactionPool: nil broadcastQueue")
+		}
 	}
 	return true
 }
@@ -94,11 +110,8 @@ type transactionPoolCheck func(t Transaction) bool
 // Fetch ...
 // Fetch a number of transactions.
 func (tp *HippoTransactionPool) Fetch(n int, checkFunc transactionPoolCheck) (result []Transaction) {
-	infoLogger.Warn("tp fetch before lock")
 	tp.Lock()
-	defer infoLogger.Warn("tp fetch unlocked")
 	defer tp.Unlock()
-	infoLogger.Warn("tp fetch after lock")
 
 	count := 0
 	result = make([]Transaction, n)

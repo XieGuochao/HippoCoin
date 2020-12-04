@@ -136,6 +136,61 @@ func (r *ReceiveBlock) Decode(b *BroadcastBlock) {
 	b.Level = r.level
 }
 
+// =============================================
+
+// BroadcastTransaction ...
+type BroadcastTransaction struct {
+	Data        []byte
+	transaction Transaction
+	Addresses   map[string]bool
+	Level       uint
+}
+
+// Encode ...
+func (bt *BroadcastTransaction) Encode() []byte {
+	if bt.transaction == nil {
+		infoLogger.Error("broadcastTransaction: encode nil")
+		return []byte{}
+	}
+	var (
+		bytes            []byte
+		err              error
+		hippoTransaction HippoTransaction
+	)
+	hippoTransaction = *(bt.transaction.(*HippoTransaction))
+	bytes, err = json.Marshal(hippoTransaction)
+	if err != nil {
+		infoLogger.Error("broadcastTransaction:", err)
+		return []byte{}
+	}
+	bt.Data = bytes
+	return bytes
+}
+
+// Decode ...
+func (bt *BroadcastTransaction) Decode() {
+	var (
+		tr  HippoTransaction
+		err error
+	)
+	err = json.Unmarshal(bt.Data, &tr)
+	if err != nil {
+		infoLogger.Error("broadcast transaction decode:", err)
+		return
+	}
+	bt.transaction.CopyVariables(&tr)
+	infoLogger.Warn("decode result:", bt.transaction)
+	return
+}
+
+// SetAddresses ...
+func (bt *BroadcastTransaction) SetAddresses(a map[string]bool) { bt.Addresses = a }
+
+// SetLevel ...
+func (bt *BroadcastTransaction) SetLevel(l uint) { bt.Level = l }
+
+// ==============================================
+
 // GetAddresses ...
 func (r *ReceiveBlock) GetAddresses() map[string]bool {
 	return r.addresses

@@ -15,6 +15,7 @@ type Storage interface {
 	UpdateVerified(hashkey string)
 	Get(hashKey string) (Block, bool)
 	GetOneFromLevel(levelNum int) Block
+	GetAllFromLevel(levelNum int) []Block
 	UpdateChild(hashKey string)
 	MaxLevel() int
 	TryUpdateMaxLevel(level int) int
@@ -218,6 +219,24 @@ func (storage *HippoStorage) Get(hashKey string) (Block, bool) {
 	return nil, false
 }
 
+// GetAllFromLevel ...
+func (storage *HippoStorage) GetAllFromLevel(levelNum int) []Block {
+	storage.LockLevel()
+	defer storage.UnlockLevel()
+	var (
+		level  map[Block]bool
+		has    bool
+		blocks = make([]Block, 0)
+	)
+	if level, has = storage.levels[levelNum]; !has {
+		return nil
+	}
+	for block := range level {
+		blocks = append(blocks, block)
+	}
+	return blocks
+}
+
 // GetOneFromLevel ...
 func (storage *HippoStorage) GetOneFromLevel(levelNum int) Block {
 	storage.LockLevel()
@@ -283,9 +302,14 @@ func (storage *HippoStorage) GetTopBlock() Block {
 	if maxLevel == -1 {
 		return nil
 	}
-	if block := storage.GetOneFromLevel(maxLevel); block != nil {
-		return block
+	for _, block := range storage.GetAllFromLevel(maxLevel) {
+		if block != nil && storage.CheckVerified(block.Hash()) {
+			return block
+		}
 	}
+	// if block := storage.GetOneFromLevel(maxLevel); block != nil {
+	// return block
+	// }
 	return nil
 }
 

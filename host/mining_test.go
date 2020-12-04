@@ -39,7 +39,7 @@ func TestMiningOK(t *testing.T) {
 	miningQueue.Run(&wg)
 
 	transactionPool := new(HippoTransactionPool)
-	transactionPool.New(balance)
+	transactionPool.New(balance, testBroadcastQueue)
 	mining.New(miningQueue, transactionPool, staticDifficulty,
 		30, 100, 100, balance, testKeys[0])
 
@@ -76,7 +76,7 @@ func TestMiningStop(t *testing.T) {
 	miningQueue.Run(&wg)
 
 	transactionPool := new(HippoTransactionPool)
-	transactionPool.New(balance)
+	transactionPool.New(balance, testBroadcastQueue)
 	mining.New(miningQueue, transactionPool, staticDifficulty,
 		30, 100, 100, balance, testKeys[0])
 
@@ -123,7 +123,7 @@ func TestMiningMultipleOK(t *testing.T) {
 	miningQueue.Run(&wg)
 
 	transactionPool := new(HippoTransactionPool)
-	transactionPool.New(balance)
+	transactionPool.New(balance, testBroadcastQueue)
 	mining.New(miningQueue, transactionPool, staticDifficulty,
 		30, 100, 100, balance, testKeys[0])
 

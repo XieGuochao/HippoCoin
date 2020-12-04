@@ -41,7 +41,10 @@ type Transaction interface {
 	GetFee() uint64
 	GetSender() ([]string, []uint64)
 	GetReceiver() ([]string, []uint64)
+	GetSignatures() []string
 
+	CloneConstants() Transaction
+	CopyVariables(tr Transaction)
 	Encode() []byte
 }
 
@@ -299,6 +302,27 @@ func (t *HippoTransaction) GetSender() ([]string, []uint64) {
 // GetReceiver ...
 func (t *HippoTransaction) GetReceiver() ([]string, []uint64) {
 	return t.ReceiverAddresses, t.ReceiverAmounts
+}
+
+// GetSignatures ...
+func (t *HippoTransaction) GetSignatures() []string { return t.SenderSignatures }
+
+// CloneConstants ...
+func (t *HippoTransaction) CloneConstants() Transaction {
+	newTransaction := HippoTransaction{
+		curve:        t.curve,
+		hashFunction: t.hashFunction,
+	}
+	return &newTransaction
+}
+
+// CopyVariables ...
+func (t *HippoTransaction) CopyVariables(tr Transaction) {
+	t.Fee = tr.GetFee()
+	t.SenderAddresses, t.SenderAmounts = tr.GetSender()
+	t.SenderSignatures = tr.GetSignatures()
+	t.ReceiverAddresses, t.ReceiverAmounts = tr.GetReceiver()
+	t.Timestamp = tr.GetTimestamp()
 }
 
 // Encode ...

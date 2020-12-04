@@ -110,6 +110,8 @@ type NetworkClient interface {
 	TryUpdateNeighbors()
 	Ping(address string) (int64, bool)
 	BroadcastBlock(address string, broadcastBlock BroadcastBlock, reply *string) error
+	BroadcastTransaction(address string, transactionBlock BroadcastTransaction, reply *string) error
+
 	QueryLevel(address string, level0, level1 int, reply *[]string) error
 	QueryByHash(address string, hashValue string) Block
 	QueryHashes(address string, hashes []string) (blocks []Block)
@@ -195,7 +197,7 @@ func (c *HippoNetworkClient) UpdateNeighbors() {
 
 	var neighbors []string
 	json.Unmarshal(reply, &neighbors)
-	infoLogger.Debug("update neighbor:", neighbors)
+	infoLogger.Warn("update neighbor:", neighbors)
 	for _, n := range neighbors {
 		c.Ping(n)
 	}
@@ -215,7 +217,7 @@ func (c *HippoNetworkClient) TryUpdateNeighbors() {
 func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 	var p2pClient P2PClientInterface
 	var err error
-	debugLogger.Debug("ping", address)
+	infoLogger.Warn("ping", address)
 
 	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
 	done := make(chan error, 1)
@@ -299,6 +301,48 @@ func (c *HippoNetworkClient) BroadcastBlock(address string, block BroadcastBlock
 	case <-ctx.Done():
 		debugLogger.Debug("netowrk client: broadcast block timeout")
 		return errors.New("netowrk client: broadcast block timeout")
+	}
+}
+
+// BroadcastTransaction ...
+func (c *HippoNetworkClient) BroadcastTransaction(address string, tr BroadcastTransaction,
+	reply *string) error {
+	var p2pClient P2PClientInterface
+	var err error
+	var ok bool
+	debugLogger.Debug("netowrk client: broadcast block", address)
+
+	ctx, cancel := context.WithTimeout(c.ctx, time.Millisecond*time.Duration(c.maxPing))
+	done := make(chan error, 1)
+
+	defer cancel()
+	ok = false
+
+	go func(done chan error) {
+		p2pClient = c.networkPool.Get(address)
+		if p2pClient != nil {
+			err = p2pClient.BroadcastTransaction(&tr, reply)
+			if err == nil {
+				ok = true
+				done <- nil
+				return
+			}
+		}
+		infoLogger.Error(err)
+		done <- nil
+		return
+	}(done)
+
+	select {
+	case <-done:
+		debugLogger.Debug("netowrk client: broadcast transaction finished.")
+		if ok {
+			return nil
+		}
+		return err
+	case <-ctx.Done():
+		debugLogger.Debug("netowrk client: broadcast transaction timeout")
+		return errors.New("netowrk client: broadcast transaction timeout")
 	}
 }
 
@@ -544,10 +588,10 @@ func (c *HippoNetworkClient) SyncNeighbors() {
 				return
 			default:
 				c.TryUpdateNeighbors()
-				debugLogger.Debug("neighbors:", c.GetNeighbors())
+				debugLogger.Info("neighbors:", c.GetNeighbors())
 
 				c.EvictNeighbors()
-				debugLogger.Debug("neighbors after eviction:", c.GetNeighbors())
+				infoLogger.Info("neighbors after eviction:", c.GetNeighbors())
 
 				seconds := c.updateTimeBase + rand.Intn(c.updateTimeRand)
 				debugLogger.Debug("sync neighbors stop:", seconds)
