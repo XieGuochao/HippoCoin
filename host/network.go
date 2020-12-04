@@ -77,7 +77,7 @@ func (l *HippoNetworkListener) Listen() {
 		infoLogger.Fatal(err, l.protocol)
 	}
 	l.port = l.listener.Addr().(*net.TCPAddr).Port
-	infoLogger.Debug("create register listener:", l.NetworkAddress())
+	infoLogger.Debug("create listener:", l.NetworkAddress())
 }
 
 // Listener ...
@@ -186,10 +186,12 @@ func (c *HippoNetworkClient) CountNeighbors() (count int) {
 func (c *HippoNetworkClient) UpdateNeighbors() {
 	var reply []byte
 	registerClient := c.register.Client()
+	defer registerClient.Close()
 	err := registerClient.AddressesRefresh(registerlib.RefreshStruct{
 		Number:  c.maxNeighbors,
 		Address: c.address,
 	}, &reply)
+	// defer registerClient.Close()
 	if err != nil {
 		infoLogger.Error("update neighbor error:", err)
 		return
@@ -259,6 +261,7 @@ func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 		c.neighbors.Store(address, t)
 	} else {
 		c.neighbors.Delete(address)
+		infoLogger.Warn("neighbor deleted:", address)
 	}
 	return t, true
 }
@@ -370,6 +373,8 @@ func (c *HippoNetworkClient) QueryLevel(address string, level0,
 				done <- nil
 				return
 			} else {
+				debugLogger.Debug("netowrk client: query level", address, level0, level1, reply)
+
 				c.networkPool.Update(address)
 			}
 		}
@@ -487,11 +492,11 @@ func (c *HippoNetworkClient) SyncBlocks(address string, storage Storage) {
 			infoLogger.Error("sync block error:", err)
 			return
 		}
-		hashes = storage.FilterNewHashes(hashes)
 		if len(hashes) == 0 {
 			infoLogger.Infof("syncBlocks %s done", address)
 			break
 		}
+		hashes = storage.FilterNewHashes(hashes)
 		newBlocks = c.QueryHashes(address, hashes)
 		if len(newBlocks) == 0 {
 			infoLogger.Infof("syncBlocks %s done", address)

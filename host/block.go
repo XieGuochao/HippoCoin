@@ -219,6 +219,7 @@ func (b *HippoBlock) CheckNonce() bool {
 		result bool
 	)
 	if result = checkNonce(b.HashSignatureBytes(), b.Nonce, b.NumBytes, b.hashFunction); !result {
+		checkNonceShow(b.HashSignatureBytes(), b.Nonce, b.NumBytes, b.hashFunction)
 		infoLogger.Error("nonce check failed:", b.Hash())
 	}
 	return result

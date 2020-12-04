@@ -112,14 +112,26 @@ func hashWithNonce(previousHash []byte, nonce uint32, hash HashFunction) []byte 
 
 // Check if the nonce hash satisfies the difficulty requirement.
 func compareHashLen(hash []byte, numBytes uint) bool {
-	return ByteToNumDigits(hash) < numBytes
+	result := ByteToNumDigits(hash) < numBytes
+	if result {
+		infoLogger.Info("check nonce success:", ByteToNumDigits(hash), numBytes)
+	}
+	return result
 }
 
 func checkNonce(previousHash []byte, nonce uint32, numBytes uint, hash HashFunction) bool {
 	sum := hashWithNonce(previousHash, nonce, hash)
 	sb := sha256.Sum256([]byte(sum))
 	sumBytes := sb[:]
-	return compareHashLen(sumBytes, numBytes)
+	result := compareHashLen(sumBytes, numBytes)
+	return result
+}
+
+func checkNonceShow(previousHash []byte, nonce uint32, numBytes uint, hash HashFunction) {
+	sum := hashWithNonce(previousHash, nonce, hash)
+	sb := sha256.Sum256([]byte(sum))
+	sumBytes := sb[:]
+	infoLogger.Warn("check nonce show:", ByteToNumDigits(sumBytes), numBytes)
 }
 
 func mineBase(ctx context.Context, baseHash []byte, numBytes uint,

@@ -149,7 +149,7 @@ func miningCallbackLog(has bool, block Block, storage Storage, bq BroadcastQueue
 // MiningCallbackBroadcastSave ...
 func MiningCallbackBroadcastSave(has bool, block Block, storage Storage, bq BroadcastQueue) {
 	if has {
-		infoLogger.Debug("mine a block:", block, block.Check())
+		infoLogger.Info("mine a block:", block, block.Check())
 		var wg sync.WaitGroup
 		wg.Add(2)
 

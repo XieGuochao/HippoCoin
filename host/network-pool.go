@@ -25,6 +25,8 @@ func (n *NetworkPool) New(ctx context.Context, clientTemplate P2PClientInterface
 
 // Get ...
 func (n *NetworkPool) Get(address string) P2PClientInterface {
+	infoLogger.Info("networkPool get:", address)
+
 	var clientInterface interface{}
 	var client P2PClientInterface
 	var has bool
@@ -36,6 +38,7 @@ func (n *NetworkPool) Get(address string) P2PClientInterface {
 		client.SetTemplateBlock(n.tempalteBlock)
 		if err == nil {
 			n.data.Store(address, client)
+			infoLogger.Info("networkPool store:", address)
 		} else {
 			client = nil
 			infoLogger.Error("networkPool get:", err)
@@ -48,6 +51,8 @@ func (n *NetworkPool) Get(address string) P2PClientInterface {
 
 // Update ...
 func (n *NetworkPool) Update(address string) P2PClientInterface {
+	infoLogger.Warn("networkPool update:", address)
+
 	var clientInterface interface{}
 	var client P2PClientInterface
 	var has bool

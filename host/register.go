@@ -15,7 +15,7 @@ import (
 // 4. Client()
 type Register interface {
 	New(ctx context.Context, address, protocol string)
-	Register() error
+	// Register() error
 	Client() *registerlib.Client
 	Stop()
 }
@@ -31,21 +31,15 @@ type HippoRegister struct {
 
 // New ...
 func (r *HippoRegister) New(ctx context.Context, address, protocol string) {
-	var err error
 	r.address, r.protocol = address, protocol
 	r.ctx, r.cancel = context.WithCancel(ctx)
-	r.client, err = registerlib.CreateClient(r.protocol, r.address)
-	if err != nil {
-		infoLogger.Fatal("new register client error:", err)
-	}
-	debugLogger.Debug("create register client success", r.client)
 
-	var response string
-	err = r.client.Ping("", &response)
-	if err != nil {
-		infoLogger.Fatal("new register client error:", err)
-	}
-	debugLogger.Debug("register ping success")
+	// var response string
+	// err = r.client.Ping("", &response)
+	// if err != nil {
+	// 	infoLogger.Fatal("new register client error:", err)
+	// }
+	// debugLogger.Debug("register ping success")
 
 	// p2p service register
 
@@ -56,18 +50,47 @@ func (r *HippoRegister) New(ctx context.Context, address, protocol string) {
 func (r *HippoRegister) Register() error {
 	var (
 		reply string
+		err   error
 	)
-	err := r.client.Register(r.address, &reply)
+	r.client, err = registerlib.CreateClient(r.protocol, r.address)
+	if err != nil {
+		infoLogger.Fatal("new register client error:", err)
+	}
+	debugLogger.Debug("create register client success", r.client)
+
+	err = r.client.Register(r.address, &reply)
 	debugLogger.Debug("register:", reply)
 	return err
 }
 
 // Client ...
 func (r *HippoRegister) Client() *registerlib.Client {
+	var err error
+	r.client, err = registerlib.CreateClient(r.protocol, r.address)
+	if err != nil {
+		infoLogger.Fatal("new register client error:", err)
+		return nil
+	}
+	debugLogger.Debug("create register client success", r.client)
+
 	return r.client
 }
 
 // Stop ...
 func (r *HippoRegister) Stop() {
 	r.cancel()
+	r.client.Close()
+}
+
+// Refresh ...
+func (r *HippoRegister) Refresh() {
+	var err error
+	r.client.Close()
+	r.client, err = registerlib.CreateClient(r.protocol, r.address)
+	if err != nil {
+		infoLogger.Fatal("new register client error:", err)
+	}
+	debugLogger.Debug("create register client success", r.client)
+
+	infoLogger.Debug("refresh register client done.")
 }
