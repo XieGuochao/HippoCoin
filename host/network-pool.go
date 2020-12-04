@@ -55,7 +55,10 @@ func (n *NetworkPool) Update(address string) P2PClientInterface {
 	clientInterface, has = n.data.Load(address)
 	if has {
 		client = clientInterface.(P2PClientInterface)
+		infoLogger.Warn("going to close client:", address)
+
 		client.Close()
+		infoLogger.Warn("close client:", address)
 	}
 
 	client = n.clientTemplate.Empty()

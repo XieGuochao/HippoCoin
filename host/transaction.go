@@ -30,6 +30,7 @@ type Transaction interface {
 	SetSignature(address string, signature string) bool
 	CheckSignatures() bool
 	Check(balance Balance) bool
+	CheckWithoutBalance() bool
 	Digest() string
 	DigestSignatures() string
 	HashBytes() []byte
@@ -217,6 +218,11 @@ func (t *HippoTransaction) Check(balance Balance) bool {
 	return t.CheckFee() && t.CheckBalance(balance) && t.CheckSignatures()
 }
 
+// CheckWithoutBalance ...
+func (t *HippoTransaction) CheckWithoutBalance() bool {
+	return t.CheckFee() && t.CheckSignatures()
+}
+
 // Digest ...
 func (t *HippoTransaction) Digest() string {
 	result := ""
@@ -323,6 +329,7 @@ func (t *HippoTransaction) CopyVariables(tr Transaction) {
 	t.SenderSignatures = tr.GetSignatures()
 	t.ReceiverAddresses, t.ReceiverAmounts = tr.GetReceiver()
 	t.Timestamp = tr.GetTimestamp()
+	infoLogger.Warn("copy variables:", t)
 }
 
 // Encode ...

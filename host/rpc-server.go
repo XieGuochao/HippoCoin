@@ -18,6 +18,7 @@ type P2PServiceInterface interface {
 	new(context.Context, net.Listener)
 	setStorage(Storage)
 	setBroadcastQueue(BroadcastQueue)
+	setTransactionPool(tp TransactionPool)
 	setBlockTemplate(block Block)
 	setTransactionTemplate(tr Transaction)
 	Ping(request string, reply *string) error
@@ -153,10 +154,10 @@ func (s *P2PServer) BroadcastTransaction(sendBlockByte []byte,
 	}
 	receiveTransaction.Data = sendBlockByte
 	receiveTransaction.transaction = s.transactionTemplate.CloneConstants()
-	receiveTransaction.Decode()
+	receiveTransaction.Decode(s.transactionTemplate)
 
 	// Check transaction
-	if !receiveTransaction.transaction.Check(s.blockTemplate.GetBalance()) {
+	if !receiveTransaction.transaction.CheckWithoutBalance() {
 		*reply = "check fail"
 		infoLogger.Error("broadcast transaction received: check fail", receiveTransaction.transaction.Hash())
 		return nil
@@ -166,7 +167,7 @@ func (s *P2PServer) BroadcastTransaction(sendBlockByte []byte,
 	if s.transactionPool != nil {
 		s.transactionPool.Push(receiveTransaction.transaction)
 	} else {
-		debugLogger.Error("no transaction pool in rpc server")
+		infoLogger.Error("no transaction pool in rpc server")
 	}
 
 	// and broadcast.

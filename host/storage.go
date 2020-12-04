@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
+	"time"
 )
 
 // Storage ...
@@ -302,15 +303,15 @@ func (storage *HippoStorage) GetTopBlock() Block {
 	if maxLevel == -1 {
 		return nil
 	}
-	for _, block := range storage.GetAllFromLevel(maxLevel) {
-		if block != nil && storage.CheckVerified(block.Hash()) {
-			return block
+	for {
+		for _, block := range storage.GetAllFromLevel(maxLevel) {
+			if block != nil && storage.CheckVerified(block.Hash()) {
+				return block
+			}
 		}
+		infoLogger.Error("no top block!")
+		time.Sleep(time.Second)
 	}
-	// if block := storage.GetOneFromLevel(maxLevel); block != nil {
-	// return block
-	// }
-	return nil
 }
 
 // GetBlocksLevel ...

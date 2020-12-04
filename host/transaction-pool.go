@@ -55,10 +55,10 @@ func (tp *HippoTransactionPool) Unlock() {
 // 3. Broadcast.
 func (tp *HippoTransactionPool) Push(t Transaction) bool {
 	infoLogger.Warn("tp push:", t.Hash())
-	if !t.Check(tp.balance) {
+	if !t.CheckWithoutBalance() {
 		return false
 	}
-	infoLogger.Warn("tp push check pass:", t.Hash())
+	infoLogger.Warn("tp push check without balance pass:", t.Hash())
 	tp.Lock()
 	defer tp.Unlock()
 	hash := t.Hash()
@@ -115,13 +115,23 @@ func (tp *HippoTransactionPool) Fetch(n int, checkFunc transactionPoolCheck) (re
 
 	count := 0
 	result = make([]Transaction, n)
+
+	sendBackTransactions := make([]Transaction, 0)
 	for count < n && tp.Len() > 0 {
 		t := tp.PopUnsafe()
 		infoLogger.Warn("pop a transaction:", t.Check(tp.balance))
 		if checkFunc(t) {
-			result[count] = t
-			count++
+			if t.Check(tp.balance) {
+				result[count] = t
+				count++
+			} else {
+				// push back because of the balance unbalanced
+				sendBackTransactions = append(sendBackTransactions, t)
+			}
 		}
+	}
+	for _, t := range sendBackTransactions {
+		tp.heap.Push(t)
 	}
 	result = result[:count]
 	infoLogger.Info("transaction pool: fetch transactions:", count)

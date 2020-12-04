@@ -216,6 +216,7 @@ func (host *HippoHost) InitNetwork(
 	host.P2PServer.setStorage(host.storage)
 	host.P2PServer.setBlockTemplate(host.blockTemplate)
 	host.P2PServer.setTransactionTemplate(host.transactionTemplate)
+	host.P2PServer.setTransactionPool(host.transactionPool)
 	host.P2PServer.serve()
 
 	host.registerAddress = registerAddress

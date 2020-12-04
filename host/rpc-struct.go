@@ -158,28 +158,42 @@ func (bt *BroadcastTransaction) Encode() []byte {
 		hippoTransaction HippoTransaction
 	)
 	hippoTransaction = *(bt.transaction.(*HippoTransaction))
+	// infoLogger.Warn("broadcastTransaction encode:", hippoTransaction)
 	bytes, err = json.Marshal(hippoTransaction)
 	if err != nil {
 		infoLogger.Error("broadcastTransaction:", err)
 		return []byte{}
 	}
 	bt.Data = bytes
+	bytes, err = json.Marshal(*bt)
+	if err != nil {
+		infoLogger.Error("broadcastTransaction:", err)
+		return []byte{}
+	}
+
 	return bytes
 }
 
 // Decode ...
-func (bt *BroadcastTransaction) Decode() {
+func (bt *BroadcastTransaction) Decode(transactionTemplate Transaction) {
 	var (
-		tr  HippoTransaction
-		err error
+		tr    HippoTransaction
+		newBt BroadcastTransaction
+		err   error
 	)
-	err = json.Unmarshal(bt.Data, &tr)
+	bt.transaction = transactionTemplate.CloneConstants()
+
+	err = json.Unmarshal(bt.Data, &newBt)
 	if err != nil {
 		infoLogger.Error("broadcast transaction decode:", err)
 		return
 	}
+
+	bt.Data = newBt.Data
+	bt.Level = newBt.Level
+	bt.Addresses = newBt.Addresses
+	err = json.Unmarshal(bt.Data, &tr)
 	bt.transaction.CopyVariables(&tr)
-	infoLogger.Warn("decode result:", bt.transaction)
 	return
 }
 

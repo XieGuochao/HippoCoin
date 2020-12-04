@@ -163,7 +163,7 @@ func (c *HippoNetworkClient) New(ctx context.Context, address string, protocol s
 	c.maxPing = 1e4 // 10 seconds
 	c.syncBlockCount = 5
 
-	c.syncBlockPeriod = 5
+	c.syncBlockPeriod = 10
 
 	c.templateBlock = templateBlock
 
@@ -249,7 +249,8 @@ func (c *HippoNetworkClient) Ping(address string) (t int64, ok bool) {
 	case <-done:
 		debugLogger.Debug("ping finished.")
 	case <-ctx.Done():
-		debugLogger.Debug("ping timeout")
+		infoLogger.Error("ping timeout", address)
+		c.networkPool.Update(address)
 	}
 
 	// debugLogger.Debug("ping done", address)
