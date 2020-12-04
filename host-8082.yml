@@ -2,7 +2,7 @@ curve: P224
 mining-threads: 1
 broadcast-queue-len: 10
 mining-capacity: 10
-mining-interval: 30
+mining-interval: 15
 mining-ttl: 7200
 protocol: tcp
 

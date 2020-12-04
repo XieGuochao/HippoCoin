@@ -117,7 +117,11 @@ func (m *HippoMining) WatchSendNewBlock() {
 
 				var block Block
 				block = new(HippoBlock)
-				prevBlock := m.storage.GetTopBlock()
+				var prevBlock Block
+				for prevBlock = m.storage.GetTopBlock(); prevBlock == nil; prevBlock = m.storage.GetTopBlock() {
+					infoLogger.Error("no top block")
+					time.Sleep(time.Second * time.Duration(10))
+				}
 				newDifficulty := m.difficultyFunction(prevBlock, m.storage,
 					m.miningInterval)
 				block.New(prevBlock.HashBytes(), newDifficulty, prevBlock.GetHashFunction(),

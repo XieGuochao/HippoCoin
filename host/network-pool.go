@@ -25,7 +25,7 @@ func (n *NetworkPool) New(ctx context.Context, clientTemplate P2PClientInterface
 
 // Get ...
 func (n *NetworkPool) Get(address string) P2PClientInterface {
-	infoLogger.Info("networkPool get:", address)
+	debugLogger.Info("networkPool get:", address)
 
 	var clientInterface interface{}
 	var client P2PClientInterface

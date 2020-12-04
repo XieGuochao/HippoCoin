@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
-	"time"
 )
 
 // Storage ...
@@ -105,7 +104,8 @@ func (storage *HippoStorage) Add(block Block) bool {
 		return false
 	}
 
-	infoLogger.Debug("storage add:", block.Hash())
+	infoLogger.Warn("storage add:", block.Hash(), "level:", block.GetLevel())
+	infoLogger.Warn("storage add:", block)
 
 	storage.LockBlock()
 	h := block.Hash()
@@ -114,17 +114,12 @@ func (storage *HippoStorage) Add(block Block) bool {
 	if _, has := storage.blocks[h]; has {
 		// We have stored this block
 		storage.UnlockBlock()
+		infoLogger.Warn("storage has stored:", block.Hash())
 		return true
 	}
 	// A new block
 	storage.blocks[h] = block
 	storage.UnlockBlock()
-
-	if storage.miningCancel != nil && storage.CheckMiningCancel(block.GetLevel()) {
-		infoLogger.Debug("cancel mining and mine the new")
-		storage.miningCancel()
-		storage.miningCancel = nil
-	}
 
 	storage.LockLevel()
 	l, has := storage.levels[block.GetLevel()]
@@ -133,6 +128,7 @@ func (storage *HippoStorage) Add(block Block) bool {
 		l = storage.levels[block.GetLevel()]
 	}
 	l[block] = true
+	infoLogger.Error(block.GetLevel(), l, storage.levels[block.GetLevel()])
 	storage.UnlockLevel()
 
 	// Update child information
@@ -146,9 +142,13 @@ func (storage *HippoStorage) Add(block Block) bool {
 	}
 
 	// Update child's verification
+	// It will change the max level.
 	if (block.GetLevel() == 0 && block.ParentHash() == "") || storage.CheckVerified(parentHash) {
 		storage.UpdateVerified(h)
 		storage.UpdateChild(h)
+		infoLogger.Error("update verify block", h)
+	} else {
+		infoLogger.Error("cannot verify block", h)
 	}
 
 	// Update balance from genesis
@@ -170,13 +170,19 @@ func (storage *HippoStorage) Add(block Block) bool {
 			infoLogger.Error("storage: cannot update balance")
 		}
 		balance.Unlock()
+		infoLogger.Warn("storage: update balance success")
 	} else {
 		infoLogger.Error("storage: no balance")
 	}
 	debugLogger.Debug("update balance end.")
 	debugLogger.Debug("balance:", storage.balance.AllBalance())
 
-	return false
+	if storage.miningCancel != nil && storage.CheckMiningCancel(block.GetLevel()+1) {
+		infoLogger.Warn("storage.add: cancel mining and mine the new")
+		storage.miningCancel()
+		storage.miningCancel = nil
+	}
+	return true
 }
 
 // AddBlocks ...
@@ -300,18 +306,22 @@ func (storage *HippoStorage) TryUpdateMaxLevel(level int) int {
 // GetTopBlock ...
 func (storage *HippoStorage) GetTopBlock() Block {
 	maxLevel := storage.MaxLevel()
-	if maxLevel == -1 {
-		return nil
-	}
-	for {
+	for maxLevel >= 0 {
+		infoLogger.Error("top block:", maxLevel)
+
 		for _, block := range storage.GetAllFromLevel(maxLevel) {
+			infoLogger.Warn("get block:", block.Hash(), block)
 			if block != nil && storage.CheckVerified(block.Hash()) {
 				return block
 			}
 		}
-		infoLogger.Error("no top block!")
-		time.Sleep(time.Second)
+		infoLogger.Error("no top block!", maxLevel)
+		storage.maxLevelLock.Lock()
+		storage.maxLevel--
+		storage.maxLevelLock.Unlock()
+		maxLevel = storage.MaxLevel()
 	}
+	return nil
 }
 
 // GetBlocksLevel ...

@@ -35,7 +35,7 @@ type Block interface {
 	GetHashFunction() HashFunction
 	SetCurve(curve elliptic.Curve)
 	GetCurve() elliptic.Curve
-	CopyConstants(b Block)
+
 	Signature() string
 	CheckSignature() bool
 	CheckTransactions() bool
@@ -45,8 +45,13 @@ type Block interface {
 	GetBalanceChange() map[string]int64
 	GetTimestamp() int64
 	GetMiner() string
+	GetNonce() uint32
 
 	Encode() []byte
+
+	CopyConstants(block Block)
+	CloneConstants() Block
+	CopyVariables(b Block)
 }
 
 // HippoBlock ...
@@ -156,11 +161,33 @@ func (b *HippoBlock) GetCurve() elliptic.Curve { return b.curve }
 // SetCurve ...
 func (b *HippoBlock) SetCurve(curve elliptic.Curve) { b.curve = curve }
 
+// GetNonce ...
+func (b *HippoBlock) GetNonce() uint32 { return b.Nonce }
+
 // CopyConstants ...
 func (b *HippoBlock) CopyConstants(block Block) {
-	b.curve = block.GetCurve()
-	b.balance = block.GetBalance()
-	b.hashFunction = block.GetHashFunction()
+	b.SetCurve(block.GetCurve())
+	b.SetBalance(block.GetBalance())
+	b.SetHashFunction(block.GetHashFunction())
+}
+
+// CloneConstants ...
+func (b *HippoBlock) CloneConstants() (block Block) {
+	block = new(HippoBlock)
+	block.CopyConstants(b)
+	return block
+}
+
+// CopyVariables ...
+func (b *HippoBlock) CopyVariables(newBlock Block) {
+	b.transactions = newBlock.GetTransactions()
+	b.Level = newBlock.GetLevel()
+	b.MinerAddress = newBlock.GetMiner()
+	b.MinerSignature = newBlock.Signature()
+	b.Nonce = newBlock.GetNonce()
+	b.NumBytes = newBlock.GetNumBytes()
+	b.PreviousHash = newBlock.ParentHashBytes()
+	b.Timestamp = newBlock.GetTimestamp()
 }
 
 // Sign ...
@@ -219,9 +246,9 @@ func (b *HippoBlock) CheckNonce() bool {
 		result bool
 	)
 	if result = checkNonce(b.HashSignatureBytes(), b.Nonce, b.NumBytes, b.hashFunction); !result {
-		checkNonceShow(b.HashSignatureBytes(), b.Nonce, b.NumBytes, b.hashFunction)
 		infoLogger.Error("nonce check failed:", b.Hash())
 	}
+	checkNonceShow(b.HashSignatureBytes(), b.Nonce, b.NumBytes, b.hashFunction)
 	return result
 }
 
@@ -309,24 +336,26 @@ func (b *HippoBlock) Encode() []byte {
 }
 
 // DecodeBlock ...
-func DecodeBlock(bytes []byte, tempalteBlock Block) Block {
+func DecodeBlock(bytes []byte, templateBlock Block) Block {
 	var b Block
-	b = new(HippoBlock)
+
+	b = templateBlock.CloneConstants()
 
 	var be BlockEncoding
 	err := json.Unmarshal(bytes, &be)
+	infoLogger.Warn("decoding block 1:", string(bytes))
 	if err != nil {
 		infoLogger.Error("decode block error:", err)
 		return nil
 	}
 
+	infoLogger.Warn("decoding block 2:", string(be.Block))
 	err = json.Unmarshal(be.Block, b)
 	if err != nil {
 		infoLogger.Error("decode block error:", err)
 		return nil
 	}
-
-	b.CopyConstants(tempalteBlock)
+	b.CopyConstants(templateBlock)
 
 	// Set transactions
 	trs := make([]Transaction, len(be.Transactions))
@@ -339,6 +368,7 @@ func DecodeBlock(bytes []byte, tempalteBlock Block) Block {
 	}
 	b.SetTransactions(trs)
 
+	infoLogger.Warn("decode a block:", b)
 	// return b
 	return b
 }
@@ -364,7 +394,8 @@ func BasicDifficulty(block Block, storage Storage,
 	return block.GetNumBytes()
 }
 
-func staticDifficulty(block Block, storage Storage,
+// StaticDifficulty ...
+func StaticDifficulty(block Block, storage Storage,
 	baseInterval int64) uint {
 	return block.GetNumBytes()
 }

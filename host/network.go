@@ -199,7 +199,7 @@ func (c *HippoNetworkClient) UpdateNeighbors() {
 
 	var neighbors []string
 	json.Unmarshal(reply, &neighbors)
-	infoLogger.Warn("update neighbor:", neighbors)
+	debugLogger.Info("update neighbor:", neighbors)
 	for _, n := range neighbors {
 		c.Ping(n)
 	}
@@ -486,7 +486,7 @@ func (c *HippoNetworkClient) SyncBlocks(address string, storage Storage) {
 	var err error
 	var newBlocks []Block
 	for {
-		infoLogger.Infof("sync blocks %s %d-%d", address, level0, level1)
+		debugLogger.Infof("sync blocks %s %d-%d", address, level0, level1)
 		err = c.QueryLevel(address, level0, level1, &hashes)
 		if err != nil {
 			infoLogger.Error("sync block error:", err)

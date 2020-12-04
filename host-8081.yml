@@ -2,13 +2,13 @@ curve: P224
 mining-threads: 1
 broadcast-queue-len: 10
 mining-capacity: 10
-mining-interval: 30
+mining-interval: 15
 mining-ttl: 7200
 protocol: tcp
 
 max-neighbors: 5
-update-time-base: 5
-update-time-rand: 3
+update-time-base: 10
+update-time-rand: 10
 
 register-address: 127.0.0.1:9325
 register-protocol: tcp

@@ -149,34 +149,37 @@ func miningCallbackLog(has bool, block Block, storage Storage, bq BroadcastQueue
 // MiningCallbackBroadcastSave ...
 func MiningCallbackBroadcastSave(has bool, block Block, storage Storage, bq BroadcastQueue) {
 	if has {
+		defer infoLogger.Infof("broadcast save block %s done.", block.Hash())
 		infoLogger.Info("mine a block:", block, block.Check())
-		var wg sync.WaitGroup
-		wg.Add(2)
+		// var wg sync.WaitGroup
+		// wg.Add(2)
 
-		go func() {
-			if storage != nil {
-				storage.Add(block)
-			} else {
-				infoLogger.Error("empty storage")
+		// go func() {
+		if storage != nil {
+			if !storage.Add(block) {
+				infoLogger.Error("MiningCallbackBroadcastSave: cannot add to storage")
+				return
 			}
-			wg.Done()
-		}()
+		} else {
+			infoLogger.Error("empty storage")
+		}
+		// wg.Done()
+		// }()
 
-		go func() {
-			if bq != nil {
-				broadcastBlock := BroadcastBlock{
-					Block:     block,
-					Level:     0,
-					Addresses: make(map[string]bool),
-				}
-				bq.Add(broadcastBlock)
-			} else {
-				infoLogger.Error("empty broadcast queue")
+		// go func() {
+		if bq != nil {
+			broadcastBlock := BroadcastBlock{
+				Block:     block,
+				Level:     0,
+				Addresses: make(map[string]bool),
 			}
-			wg.Done()
-		}()
+			bq.Add(broadcastBlock)
+		} else {
+			infoLogger.Error("empty broadcast queue")
+		}
+		// wg.Done()
+		// }()
 
-		wg.Wait()
-		infoLogger.Infof("broadcast save block %s done.", block.Hash())
+		// wg.Wait()
 	}
 }

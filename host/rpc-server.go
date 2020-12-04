@@ -114,17 +114,25 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 		broadcastBlock BroadcastBlock
 		block          Block
 	)
-	broadcastBlock.Block = s.blockTemplate
+	debugLogger.Warn("p2p server block template:", s.blockTemplate)
+	broadcastBlock.Block = s.blockTemplate.CloneConstants()
+	debugLogger.Warn("p2p server block:", broadcastBlock.Block)
+
 	// debugLogger.Debug("receive bytes:", sendBlockByte)
 	receiveBlock.Decode(&broadcastBlock)
+	broadcastBlock.Block.CopyConstants(s.blockTemplate)
 	// debugLogger.Debug("receive block:", broadcastBlock)
 	block = broadcastBlock.Block
 
-	block.CopyConstants(s.blockTemplate)
+	debugLogger.Warn("after decode block:", block)
 
+	for i, tr := range block.GetTransactions() {
+		infoLogger.Warn("after decode: transaction", i, tr)
+	}
 	// Check block
 	if !block.Check() {
 		*reply = "check fail"
+		infoLogger.Error("broadcastBlock: check block failed", block.Hash())
 		return nil
 	}
 

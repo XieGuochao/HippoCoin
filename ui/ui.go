@@ -30,6 +30,7 @@ type UIBlock struct {
 	Miner         string
 	Time          string
 	BalanceChange map[string]int64
+	NumBytes      uint
 }
 
 // UITransaction ...
@@ -275,6 +276,7 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 				Miner:         b.GetMiner(),
 				BalanceChange: b.GetBalanceChange(),
 				Time:          time.Unix(b.GetTimestamp(), 0).UTC().String(),
+				NumBytes:      b.GetNumBytes(),
 			}
 			trs := b.GetTransactions()
 			block.Transactions = make([]UITransaction, len(trs))

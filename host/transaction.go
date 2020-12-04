@@ -209,6 +209,7 @@ func (t *HippoTransaction) CheckSignatures() bool {
 			return false
 		}
 	}
+	infoLogger.Warn("check signature true:", t.Hash())
 	return true
 }
 
