@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/withmandala/go-log"
@@ -73,6 +74,8 @@ func main() {
 
 	fmt.Println("output to debug file:", t+"-debug.out")
 
+	runtime.GOMAXPROCS(config.MiningThreads + 1)
+	fmt.Println("set max procs:", config.MiningThreads+1)
 	host.InitLocals(ctx, Hash, config.miningFunction, 1,
 		new(P2PClient), uint(config.BroadcastQueueLen), MiningCallbackBroadcastSave,
 		BasicDifficulty, int64(config.MiningInterval), config.MiningCapacity,
