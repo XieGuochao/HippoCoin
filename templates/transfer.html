@@ -24,6 +24,17 @@
 <body>
     <div class="container-fluid">
         <h1>Hello, <i>HippoCoin</i> Web Client!</h1>
+        <div class="btn-group row" role="group" aria-label="Basic example">
+            <a href="/">
+                <button type="button" class="btn btn-outline-primary mr-3">Home</button>
+            </a>
+            <a href="/transfer">
+                <button type="button" class="btn btn-outline-info mr-3">Transfer</button>
+            </a>
+            <a href="/myaccount">
+                <button type="button" class="btn btn-outline-success">My Account</button>
+            </a>
+        </div>
         <hr>
         <h3>My Address:</h3>
         <p>{{.address}}</p>

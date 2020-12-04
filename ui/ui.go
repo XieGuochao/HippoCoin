@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/withmandala/go-log"
 
@@ -22,11 +23,13 @@ type UI struct {
 
 // UIBlock ...
 type UIBlock struct {
-	Hash         string
-	ParentHash   string
-	Transactions []UITransaction
-	Level        int
-	Miner        string
+	Hash          string
+	ParentHash    string
+	Transactions  []UITransaction
+	Level         int
+	Miner         string
+	Time          string
+	BalanceChange map[string]int64
 }
 
 // UITransaction ...
@@ -266,10 +269,12 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 			return
 		} else {
 			block := UIBlock{
-				Hash:       b.Hash(),
-				ParentHash: b.ParentHash(),
-				Level:      b.GetLevel(),
-				Miner:      b.GetMiner(),
+				Hash:          b.Hash(),
+				ParentHash:    b.ParentHash(),
+				Level:         b.GetLevel(),
+				Miner:         b.GetMiner(),
+				BalanceChange: b.GetBalanceChange(),
+				Time:          time.Unix(b.GetTimestamp(), 0).UTC().String(),
 			}
 			trs := b.GetTransactions()
 			block.Transactions = make([]UITransaction, len(trs))
