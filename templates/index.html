@@ -72,6 +72,9 @@
                     {{else}}
                         <a href="/block/{{ $b.ParentHash }}">{{ $b.ParentHash }}</a>
                     {{end}}
+                    <div>
+                        <i>{{ $b.Time }}</i>
+                    </div>
                 </li>
                 {{end}}
             </ul>

@@ -345,6 +345,7 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 					ParentHash: parentHash,
 					Level:      b.GetLevel(),
 					Miner:      b.GetMiner(),
+					Time:       time.Unix(b.GetTimestamp(), 0).UTC().String(),
 				}
 			}
 		}
