@@ -22,7 +22,7 @@
 </head>
 
 <body>
-    <div class="container-fluid">
+    <div class="container-fluid mb-5 mt-5 pl-3 pr-3">
         <h1>Hello, <i>HippoCoin Block </i> </h1>
         <div class="btn-group row" role="group" aria-label="Basic example">
             <a href="/">
@@ -62,22 +62,28 @@
 
         <hr>
         <ul>
-            {{range $i, $tr := .Transactions}}
+            {{range $i, $tr := .transactions}}
             <h5>{{$i}}</h5>
             <p>
-                {{$tr.Timestamp}}
+                {{$tr.Time}}
             </p>
+            <hr>
+            <h5>Senders</h5>
             <ol>
-                {{range $_, $address := $tr.SenderAddresses}}
-                <li>{{$address}}</li>
+                {{range $i, $address := $tr.SenderAddresses}}
+                <li>{{$address}}: {{index $tr.SenderAmounts $i }}</li>
                 {{end}}
             </ol>
+            <hr>
+            <h5>Senders</h5>
             <ol>
-                {{range $_, $amount := $tr.SenderAmounts}}
-                <li>{{$amount}}</li>
+                {{range $i, $address := $tr.ReceiverAddresses}}
+                <li>{{$address}}: {{index $tr.ReceiverAmounts $i }}</li>
                 {{end}}
             </ol>
-            <p>Fee: {{$tr.Fee}}</p>
+            <hr>
+            <h5>Fee: {{$tr.Fee}}</h5>
+            <hr>
             {{end}}
         </ul>
     </div>

@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -35,12 +36,12 @@ type UIBlock struct {
 
 // UITransaction ...
 type UITransaction struct {
-	SenderAddreesses  []string
+	SenderAddresses   []string
 	SenderAmounts     []uint64
 	ReceiverAddresses []string
 	ReceiverAmounts   []uint64
 	Fee               uint64
-	TimeStamp         int64
+	Time              string
 }
 
 // New ...
@@ -86,7 +87,7 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 
 	u.r.POST("/transfer-post", func(c *gin.Context) {
 		var (
-			senderAddreesses  []string
+			SenderAddresses   []string
 			senderAmounts     []uint64
 			senderKeys        []host.Key
 			receiverAddresses []string
@@ -135,7 +136,7 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 		numSenders++
 		numReceivers++
 
-		senderAddreesses = make([]string, 0)
+		SenderAddresses = make([]string, 0)
 		senderAmounts = make([]uint64, 0)
 		senderKeys = make([]host.Key, 0)
 
@@ -153,7 +154,7 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 				c.String(http.StatusBadRequest, "empty sender address.")
 				return
 			}
-			senderAddreesses = append(senderAddreesses, value)
+			SenderAddresses = append(SenderAddresses, value)
 
 			key = fmt.Sprintf("sender-amount-%d", i)
 			if value = c.Request.PostFormValue(key); value == "" {
@@ -210,7 +211,7 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 		var ok bool
 		newTransaction = new(host.HippoTransaction)
 		newTransaction.New(h.GetHashFunction(), h.GetCurve())
-		if ok = newTransaction.SetSender(senderAddreesses, senderAmounts); !ok {
+		if ok = newTransaction.SetSender(SenderAddresses, senderAmounts); !ok {
 			c.String(http.StatusBadRequest, "set senders failed.")
 			infoLogger.Error("ui: transfer-post set senders failed.")
 			return
@@ -285,13 +286,13 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 			block.Transactions = make([]UITransaction, len(trs))
 			for i, tr := range trs {
 				block.Transactions[i] = UITransaction{
-					Fee:       tr.GetFee(),
-					TimeStamp: tr.GetTimestamp(),
+					Fee:  tr.GetFee(),
+					Time: time.Unix(tr.GetTimestamp(), 0).UTC().String(),
 				}
-				block.Transactions[i].SenderAddreesses, block.Transactions[i].SenderAmounts = tr.GetSender()
+				block.Transactions[i].SenderAddresses, block.Transactions[i].SenderAmounts = tr.GetSender()
 				block.Transactions[i].ReceiverAddresses, block.Transactions[i].ReceiverAmounts = tr.GetReceiver()
-
 			}
+			infoLogger.Info("ui-transaction:", block.Transactions)
 			c.HTML(200, "block.html", gin.H{
 				"block":        block,
 				"transactions": block.Transactions,
@@ -322,8 +323,10 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 			}
 		}
 		levels = make([][]UIBlock, maxLevel+1)
+		levelNumbers := make([]int, maxLevel+1)
 		for l, oneLevel := range levelHashes {
 			levels[l] = make([]UIBlock, len(oneLevel))
+			levelNumbers[l] = maxLevel - l
 
 			for i, h := range oneLevel {
 				b, has := blocks[h]
@@ -347,11 +350,13 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 		balanceInterface, _ := c.Get("balance")
 		balance := balanceInterface.(map[string]uint64)
 
+		reverseAny(levels)
 		c.HTML(200, "index.html", gin.H{
-			"levels":    levels,
-			"publicKey": c.GetString("public-key"),
-			"address":   c.GetString("address"),
-			"balance":   balance,
+			"levels":      levels,
+			"levelNumber": levelNumbers,
+			"publicKey":   c.GetString("public-key"),
+			"address":     c.GetString("address"),
+			"balance":     balance,
 		})
 	})
 
@@ -360,4 +365,12 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 // Main ...
 func (u *UI) Main(port string) {
 	go u.r.Run(":" + port)
+}
+
+func reverseAny(s interface{}) {
+	n := reflect.ValueOf(s).Len()
+	swap := reflect.Swapper(s)
+	for i, j := 0, n-1; i < j; i, j = i+1, j-1 {
+		swap(i, j)
+	}
 }

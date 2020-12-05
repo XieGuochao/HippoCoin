@@ -13,6 +13,6 @@ update-time-rand: 10
 register-address: 127.0.0.1:9325
 register-protocol: tcp
 
-debug-file-template: ./host3-%s.log
+debug-file-template: ./log/host3-%s.log
 
 ui-port: 8082
