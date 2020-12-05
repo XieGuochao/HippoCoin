@@ -33,7 +33,10 @@
                 <button type="button" class="btn btn-outline-info mr-3">Transfer</button>
             </a>
             <a href="/myaccount">
-                <button type="button" class="btn btn-outline-success">My Account</button>
+                <button type="button" class="btn btn-outline-success mr-3">My Account</button>
+            </a>
+            <a href="/show-log">
+                <button type="button" class="btn btn-outline-secondary">Show Logs</button>
             </a>
         </div>
 
@@ -64,7 +67,11 @@
                 {{range $_, $b := $onelevel}}
                 <li>
                     <a href="/block/{{ $b.Hash }}">{{ $b.Hash }}</a> 👉
-                    <a href="/block/{{ $b.ParentHash }}">{{ $b.ParentHash }}</a>
+                    {{ if eq $b.ParentHash "Genisus!" }}
+                        {{ $b.ParentHash }}
+                    {{else}}
+                        <a href="/block/{{ $b.ParentHash }}">{{ $b.ParentHash }}</a>
+                    {{end}}
                 </li>
                 {{end}}
             </ul>

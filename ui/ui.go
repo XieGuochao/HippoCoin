@@ -302,6 +302,8 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 		}
 	})
 
+	u.r.StaticFS("/show-log", http.Dir("log"))
+
 	u.r.GET("/", func(c *gin.Context) {
 		var levelHashes map[int][]string
 		var levels [][]UIBlock
