@@ -79,9 +79,11 @@ func main() {
 	if infoPath != "" && infoPath != "STDOUT" {
 		infoPath = fmt.Sprintf(infoPath, t)
 	}
-	host.New(true, debugPath, infoPath, config.curve, true)
+
+	host.New(true, debugPath, infoPath, config.curve, config.LocalMode)
 	host.InitLogger(true)
 	debugLogger, infoLogger = host.GetLoggers()
+	infoLogger.Info("localmode:", config.LocalMode)
 
 	fmt.Println("output to debug file:", t+"-debug.out")
 

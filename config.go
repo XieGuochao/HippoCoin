@@ -32,6 +32,8 @@ type HippoConfig struct {
 	InfoFileTemplate  string `yaml:"info-file-template"`
 
 	UIPort string `yaml:"ui-port"`
+
+	LocalMode bool `yaml:"local-mode"`
 }
 
 // Load ...

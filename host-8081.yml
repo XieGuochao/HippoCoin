@@ -13,6 +13,8 @@ update-time-rand: 10
 register-address: 127.0.0.1:9325
 register-protocol: tcp
 
+local-mode: false
+
 debug-file-template: ./log/host2-debug-%s.log
 info-file-template: ./log/host2-info-%s.log
 
