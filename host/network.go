@@ -77,7 +77,7 @@ func (l *HippoNetworkListener) Listen() {
 		infoLogger.Fatal(err, l.protocol)
 	}
 	l.port = l.listener.Addr().(*net.TCPAddr).Port
-	infoLogger.Debug("create listener:", l.NetworkAddress())
+	debugLogger.Debug("create listener:", l.NetworkAddress())
 }
 
 // Listener ...
@@ -530,7 +530,7 @@ func (c *HippoNetworkClient) StartSyncBlocks(storage Storage) {
 		for {
 			select {
 			case <-c.syncBlockCtx.Done():
-				infoLogger.Debug("stop sync blocks")
+				infoLogger.Warn("stop sync blocks")
 				return
 			default:
 				go c.SyncAddressesN(c.syncBlockCount, storage)
@@ -590,7 +590,7 @@ func (c *HippoNetworkClient) SyncNeighbors() {
 		for {
 			select {
 			case <-c.syncNeighborsCtx.Done():
-				infoLogger.Debug("stop sync neighbors")
+				infoLogger.Warn("stop sync neighbors")
 				return
 			default:
 				c.TryUpdateNeighbors()
@@ -605,7 +605,7 @@ func (c *HippoNetworkClient) SyncNeighbors() {
 			}
 		}
 	}()
-	infoLogger.Debug("start sync neighbors")
+	infoLogger.Info("start sync neighbors")
 }
 
 // StopSyncNeighbors ...

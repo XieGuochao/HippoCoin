@@ -104,8 +104,8 @@ func (storage *HippoStorage) Add(block Block) bool {
 		return false
 	}
 
-	infoLogger.Warn("storage add:", block.Hash(), "level:", block.GetLevel())
-	infoLogger.Warn("storage add:", block)
+	debugLogger.Debug("storage add:", block.Hash(), "level:", block.GetLevel())
+	debugLogger.Debug("storage add:", block)
 
 	storage.LockBlock()
 	h := block.Hash()
@@ -128,7 +128,7 @@ func (storage *HippoStorage) Add(block Block) bool {
 		l = storage.levels[block.GetLevel()]
 	}
 	l[block] = true
-	infoLogger.Error(block.GetLevel(), l, storage.levels[block.GetLevel()])
+	debugLogger.Debug(block.GetLevel(), l, storage.levels[block.GetLevel()])
 	storage.UnlockLevel()
 
 	// Update child information
@@ -146,7 +146,7 @@ func (storage *HippoStorage) Add(block Block) bool {
 	if (block.GetLevel() == 0 && block.ParentHash() == "") || storage.CheckVerified(parentHash) {
 		storage.UpdateVerified(h)
 		storage.UpdateChild(h)
-		infoLogger.Error("update verify block", h)
+		debugLogger.Debug("update verify block", h)
 	} else {
 		infoLogger.Error("cannot verify block", h)
 	}
@@ -170,7 +170,7 @@ func (storage *HippoStorage) Add(block Block) bool {
 			infoLogger.Error("storage: cannot update balance")
 		}
 		balance.Unlock()
-		infoLogger.Warn("storage: update balance success")
+		infoLogger.Info("storage: update balance success")
 	} else {
 		infoLogger.Error("storage: no balance")
 	}
@@ -178,7 +178,7 @@ func (storage *HippoStorage) Add(block Block) bool {
 	debugLogger.Debug("balance:", storage.balance.AllBalance())
 
 	if storage.miningCancel != nil && storage.CheckMiningCancel(block.GetLevel()+1) {
-		infoLogger.Warn("storage.add: cancel mining and mine the new")
+		infoLogger.Info("storage.add: cancel mining and mine the new")
 		storage.miningCancel()
 		storage.miningCancel = nil
 	}
@@ -307,10 +307,10 @@ func (storage *HippoStorage) TryUpdateMaxLevel(level int) int {
 func (storage *HippoStorage) GetTopBlock() Block {
 	maxLevel := storage.MaxLevel()
 	for maxLevel >= 0 {
-		infoLogger.Error("top block:", maxLevel)
+		debugLogger.Debug("top block:", maxLevel)
 
 		for _, block := range storage.GetAllFromLevel(maxLevel) {
-			infoLogger.Warn("get block:", block.Hash(), block)
+			debugLogger.Debug("get block:", block.Hash(), block)
 			if block != nil && storage.CheckVerified(block.Hash()) {
 				return block
 			}

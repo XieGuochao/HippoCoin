@@ -150,7 +150,7 @@ func GenerateKey(curve elliptic.Curve) *ecdsa.PrivateKey {
 // SaveKey ...
 func SaveKey(key *ecdsa.PrivateKey, privateKeyFile string) {
 	privateKeyBytes := keyToByte(key)
-	infoLogger.Debug("Create one key pair:", privateKeyFile)
+	infoLogger.Info("Create one key pair:", privateKeyFile)
 
 	ioutil.WriteFile(privateKeyFile, privateKeyBytes, 0644)
 }

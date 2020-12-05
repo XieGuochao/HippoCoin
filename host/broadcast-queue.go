@@ -56,7 +56,7 @@ func (bq *HippoBroadcastQueue) SetNetworkClient(networkClient NetworkClient) {
 func (bq *HippoBroadcastQueue) Add(b BroadcastBlock) {
 	if b.Level < bq.maxBroadcastLevel {
 		bq.channel <- b
-		debugLogger.Debug("broadcastQueue add block:", b.Block.Hash())
+		debugLogger.Debug("broadcastQueue add block:", b.block.Hash())
 	}
 }
 
@@ -76,7 +76,7 @@ func (bq *HippoBroadcastQueue) Run() {
 		for {
 			select {
 			case <-bq.ctx.Done():
-				infoLogger.Debug("broadcast queue closed.")
+				infoLogger.Info("broadcast queue closed.")
 				return
 			case block := <-bq.channel:
 				debugLogger.Debug("broadcast queue receive broadcast block")
@@ -99,6 +99,11 @@ func (bq *HippoBroadcastQueue) broadcastBlockSend(block BroadcastBlock) {
 	debugLogger.Debug("receive broadcast block")
 	addresses := bq.networkClient.GetNeighbors()
 	debugLogger.Debug("neighbors all:", addresses)
+
+	if block.Addresses == nil {
+		block.Addresses = make(map[string]bool)
+		infoLogger.Fatal("error: no address")
+	}
 
 	addressesToSend := make(map[string]bool)
 	for _, address := range addresses {

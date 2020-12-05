@@ -91,14 +91,14 @@ func (m *MiningQueue) main() {
 
 			// m.miningFunc.New(m.context, m.hashFunction, m.threads)
 			result, newBlock := m.miningFunc.Solve(m.context, block)
-			infoLogger.Debug("mining:", result)
+			infoLogger.Info("mining:", result)
 			if result {
 				infoLogger.Info("mining success result:", newBlock.Hash())
 			}
 			m.callback(result, &newBlock, m.storage, m.broadcastQueue)
-			infoLogger.Debug("mining continue to mine:")
+			infoLogger.Info("mining continue to mine:")
 			m.miningStatus <- true
-			infoLogger.Debug("mining queue: trigger mining status")
+			infoLogger.Info("mining queue: trigger mining status")
 		case <-m.queueContext.Done():
 			debugLogger.Debug("mining queue closed.")
 			return
@@ -139,10 +139,10 @@ func (m *MiningQueue) Close() {
 }
 
 func miningCallbackLog(has bool, block Block, storage Storage, bq BroadcastQueue) {
-	infoLogger.Debug("has:", has)
+	debugLogger.Debug("has:", has)
 	if has {
-		infoLogger.Debug("mine a block:", block)
-		infoLogger.Debug("mine check:", block.CheckNonce(), block.Check())
+		debugLogger.Debug("mine a block:", block)
+		debugLogger.Debug("mine check:", block.CheckNonce(), block.Check())
 	}
 }
 
@@ -150,7 +150,7 @@ func miningCallbackLog(has bool, block Block, storage Storage, bq BroadcastQueue
 func MiningCallbackBroadcastSave(has bool, block Block, storage Storage, bq BroadcastQueue) {
 	if has {
 		defer infoLogger.Infof("broadcast save block %s done.", block.Hash())
-		infoLogger.Info("mine a block:", block, block.Check())
+		infoLogger.Info("mine a block:", block.Hash(), block.Check())
 		// var wg sync.WaitGroup
 		// wg.Add(2)
 
@@ -169,7 +169,7 @@ func MiningCallbackBroadcastSave(has bool, block Block, storage Storage, bq Broa
 		// go func() {
 		if bq != nil {
 			broadcastBlock := BroadcastBlock{
-				Block:     block,
+				block:     block,
 				Level:     0,
 				Addresses: make(map[string]bool),
 			}

@@ -60,10 +60,10 @@ func (r QueryResponse) GetLevel() uint { return 0 }
 
 // BroadcastBlock ...
 type BroadcastBlock struct {
-	Block        Block
-	Transactions []Transaction
-	Level        uint
-	Addresses    map[string]bool
+	Data      []byte
+	block     Block
+	Level     uint
+	Addresses map[string]bool
 }
 
 // Encode ...
@@ -72,8 +72,7 @@ func (b *BroadcastBlock) Encode() []byte {
 		bytes []byte
 		err   error
 	)
-	b.Transactions = b.Block.GetTransactions()
-	b.Block.SetTransactions([]Transaction{})
+	b.Data = b.block.Encode()
 	bytes, err = json.Marshal(b)
 	debugLogger.Debug("encode:", err)
 	return bytes
@@ -117,8 +116,8 @@ func (r *ReceiveBlock) Decode(b *BroadcastBlock) {
 		json.Unmarshal(bytes, &trs)
 		r.block.transactions = make([]Transaction, len(trs))
 		for i, tr := range trs {
-			tr.curve = b.Block.GetCurve()
-			tr.hashFunction = b.Block.GetHashFunction()
+			tr.curve = b.block.GetCurve()
+			tr.hashFunction = b.block.GetHashFunction()
 			infoLogger.Warn("block:", tr, tr.curve, tr.hashFunction)
 			r.block.transactions[i] = &tr
 		}
@@ -130,8 +129,7 @@ func (r *ReceiveBlock) Decode(b *BroadcastBlock) {
 		json.Unmarshal(bytes, &r.level)
 	}
 	// debugLogger.Debug("decode:", r.block)
-	b.Block = r.block
-	b.Transactions = r.block.transactions
+	b.block = r.block
 	b.Addresses = r.addresses
 	b.Level = r.level
 }

@@ -110,7 +110,7 @@ func (host *HippoHost) InitKey(curve elliptic.Curve) {
 	host.curve = curve
 	host.key.New(curve)
 	host.key.GenerateKey()
-	infoLogger.Debug("key:", host.key.ToAddress())
+	infoLogger.Info("key:", host.key.ToAddress())
 }
 
 // InitLogger ...
@@ -205,10 +205,10 @@ func (host *HippoHost) InitNetwork(
 	host.networkListener.New(host.ctx, host.IP, host.protocol)
 	host.networkListener.Listen()
 
-	infoLogger.Debug("listener: create")
+	infoLogger.Info("listener: create")
 
 	host.address = host.networkListener.NetworkAddress()
-	infoLogger.Debug("listener:", host.address)
+	infoLogger.Info("listener:", host.address)
 
 	host.P2PServer = new(P2PServer)
 	host.P2PServer.new(host.ctx, host.networkListener.Listener())
@@ -224,14 +224,14 @@ func (host *HippoHost) InitNetwork(
 	host.register = new(HippoRegister)
 	host.register.New(host.ctx, host.registerAddress, host.registerProtocol)
 
-	infoLogger.Debug("register: create")
+	infoLogger.Info("register: create")
 
 	host.networkClient = new(HippoNetworkClient)
 	host.networkClient.New(host.ctx, host.address, host.protocol,
 		maxNeighbors, host.register, updateTimeBase,
 		updateTimeRand, host.P2PClientTemplate, host.blockTemplate)
 	host.broadcastQueue.SetNetworkClient(host.networkClient)
-	infoLogger.Debug("network client: created")
+	infoLogger.Info("network client: created")
 }
 
 // Run ...
@@ -251,7 +251,7 @@ func (host *HippoHost) Run() {
 
 	go watchStorageBalance(host.storage, host.balance,
 		20)
-	infoLogger.Debug("host running")
+	infoLogger.Info("host running")
 	host.waitGroup.Wait()
 }
 
@@ -266,7 +266,7 @@ func (host *HippoHost) New(debug bool, debugFile string,
 
 // Close ...
 func (host *HippoHost) Close() {
-	infoLogger.Debug("host: closed")
+	infoLogger.Info("host: closed")
 	host.cancel()
 }
 

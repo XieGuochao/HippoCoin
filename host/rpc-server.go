@@ -2,6 +2,7 @@ package host
 
 import (
 	"context"
+	"encoding/json"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -68,7 +69,7 @@ func (s *P2PServer) serve() {
 		for {
 			select {
 			case <-s.ctx.Done():
-				infoLogger.Debug("p2p server close.")
+				infoLogger.Warn("p2p server close.")
 				return
 			default:
 				conn, err := s.listener.Accept()
@@ -108,26 +109,25 @@ func (s *P2PServer) Ping(request string, reply *string) error {
 // BroadcastBlock ...
 func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 	reply *string) error {
-	var receiveBlock ReceiveBlock
-	receiveBlock.Data = sendBlockByte
+	var receiveBlock BroadcastBlock
 	var (
-		broadcastBlock BroadcastBlock
-		block          Block
+		block Block
 	)
-	debugLogger.Warn("p2p server block template:", s.blockTemplate)
-	broadcastBlock.Block = s.blockTemplate.CloneConstants()
-	debugLogger.Warn("p2p server block:", broadcastBlock.Block)
+	debugLogger.Debug("broadcastBlock: receive bytes:", string(sendBlockByte))
+	// decode receiveBlock to get the data
+	json.Unmarshal(sendBlockByte, &receiveBlock)
 
-	// debugLogger.Debug("receive bytes:", sendBlockByte)
-	receiveBlock.Decode(&broadcastBlock)
-	broadcastBlock.Block.CopyConstants(s.blockTemplate)
+	debugLogger.Debug("broadcastBlock: decode receiveBlock:", receiveBlock)
+
+	receiveBlock.block = DecodeBlock(receiveBlock.Data, s.blockTemplate)
 	// debugLogger.Debug("receive block:", broadcastBlock)
-	block = broadcastBlock.Block
+	block = receiveBlock.block
 
-	debugLogger.Warn("after decode block:", block)
+	debugLogger.Debug("after decode block:", block)
+	infoLogger.Info("rpc-server: receive broadcastBlock:", block.Hash())
 
 	for i, tr := range block.GetTransactions() {
-		infoLogger.Warn("after decode: transaction", i, tr)
+		debugLogger.Debug("after decode: transaction", i, tr)
 	}
 	// Check block
 	if !block.Check() {
@@ -145,8 +145,8 @@ func (s *P2PServer) BroadcastBlock(sendBlockByte []byte,
 
 	// and broadcast.
 	if s.broadcastQueue != nil {
-		broadcastBlock.Level++
-		s.broadcastQueue.Add(broadcastBlock)
+		receiveBlock.Level++
+		s.broadcastQueue.Add(receiveBlock)
 	} else {
 		debugLogger.Debug("no broadcast queue in rpc server")
 	}

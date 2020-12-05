@@ -169,7 +169,7 @@ func (t *HippoTransaction) Sign(key Key) bool {
 	address := key.ToAddress()
 	pos := t.findAddress(address)
 	if pos == -1 {
-		infoLogger.Debug("Cannot sign the transaction:", t.Hash())
+		infoLogger.Error("Cannot sign the transaction:", t.Hash())
 		return false
 	}
 	if signature, err = key.SignString(t.HashBytes()); err == nil {

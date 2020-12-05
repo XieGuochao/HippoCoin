@@ -332,6 +332,8 @@ func (b *HippoBlock) Encode() []byte {
 		Transactions: transactionsBytes,
 	}
 	blockBytes, _ = json.Marshal(be)
+
+	debugLogger.Debug("block.Encode:", string(blockBytes))
 	return blockBytes
 }
 
@@ -343,13 +345,13 @@ func DecodeBlock(bytes []byte, templateBlock Block) Block {
 
 	var be BlockEncoding
 	err := json.Unmarshal(bytes, &be)
-	infoLogger.Warn("decoding block 1:", string(bytes))
+	debugLogger.Debug("decoding block 1:", string(bytes))
 	if err != nil {
 		infoLogger.Error("decode block error:", err)
 		return nil
 	}
 
-	infoLogger.Warn("decoding block 2:", string(be.Block))
+	debugLogger.Debug("decoding block 2:", string(be.Block))
 	err = json.Unmarshal(be.Block, b)
 	if err != nil {
 		infoLogger.Error("decode block error:", err)
@@ -368,7 +370,7 @@ func DecodeBlock(bytes []byte, templateBlock Block) Block {
 	}
 	b.SetTransactions(trs)
 
-	infoLogger.Warn("decode a block:", b)
+	debugLogger.Debug("decode a block:", b)
 	// return b
 	return b
 }

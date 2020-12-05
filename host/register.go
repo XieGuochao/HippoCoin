@@ -43,7 +43,7 @@ func (r *HippoRegister) New(ctx context.Context, address, protocol string) {
 
 	// p2p service register
 
-	infoLogger.Debug("new register client done.")
+	infoLogger.Info("new register client done.")
 }
 
 // Register ...
@@ -92,5 +92,5 @@ func (r *HippoRegister) Refresh() {
 	}
 	debugLogger.Debug("create register client success", r.client)
 
-	infoLogger.Debug("refresh register client done.")
+	infoLogger.Info("refresh register client done.")
 }

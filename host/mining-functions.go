@@ -94,7 +94,7 @@ func (m *MultipleMiningFunction) Solve(ctx context.Context, block HippoBlock) (r
 		}(miningContext, miningCancel, i)
 	}
 	wg.Wait()
-	infoLogger.Debug("multiple mining solved:", totalNonce, result)
+	infoLogger.Info("multiple mining solved:", totalNonce, result)
 	if result {
 		block.Nonce = totalNonce
 		return true, block
@@ -114,7 +114,7 @@ func hashWithNonce(previousHash []byte, nonce uint32, hash HashFunction) []byte 
 func compareHashLen(hash []byte, numBytes uint) bool {
 	result := ByteToNumDigits(hash) < numBytes
 	if result {
-		infoLogger.Info("check nonce success:", ByteToNumDigits(hash), numBytes)
+		debugLogger.Debug("check nonce success:", ByteToNumDigits(hash), numBytes)
 	}
 	return result
 }
@@ -131,7 +131,7 @@ func checkNonceShow(previousHash []byte, nonce uint32, numBytes uint, hash HashF
 	sum := hashWithNonce(previousHash, nonce, hash)
 	sb := sha256.Sum256([]byte(sum))
 	sumBytes := sb[:]
-	infoLogger.Warn("check nonce show:", ByteToNumDigits(sumBytes), numBytes)
+	debugLogger.Debug("check nonce show:", ByteToNumDigits(sumBytes), numBytes)
 }
 
 func mineBase(ctx context.Context, baseHash []byte, numBytes uint,

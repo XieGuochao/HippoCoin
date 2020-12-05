@@ -78,7 +78,7 @@ func main() {
 	fmt.Println("set max procs:", config.MiningThreads+2)
 	host.InitLocals(ctx, Hash, config.miningFunction, 1,
 		new(P2PClient), uint(config.BroadcastQueueLen), MiningCallbackBroadcastSave,
-		StaticDifficulty, int64(config.MiningInterval), config.MiningCapacity,
+		BasicDifficulty, int64(config.MiningInterval), config.MiningCapacity,
 		int64(config.MiningTTL), config.Protocol)
 	host.InitNetwork(new(HippoBlock), new(HippoTransaction), config.MaxNeighbors, config.UpdateTimeBase, config.UpdateTimeRand,
 		config.RegisterAddress, config.RegisterProtocol)
