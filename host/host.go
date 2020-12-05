@@ -13,7 +13,7 @@ import (
 
 // Host ...
 type Host interface {
-	New(debug bool, debugFile string, curve elliptic.Curve, localMode bool)
+	New(debug bool, debugFile string, infoFile string, curve elliptic.Curve, localMode bool)
 
 	Run()
 	InitLogger(debug bool)
@@ -103,6 +103,7 @@ type HippoHost struct {
 
 	miningInterval int64
 	debugFile      string
+	infoFile       string
 }
 
 // InitKey ...
@@ -115,7 +116,7 @@ func (host *HippoHost) InitKey(curve elliptic.Curve) {
 
 // InitLogger ...
 func (host *HippoHost) InitLogger(debug bool) {
-	initLogger(host.debugFile)
+	initLogger(host.debugFile, host.infoFile)
 	if debug {
 		debugLogger.WithDebug()
 	} else {
@@ -257,11 +258,12 @@ func (host *HippoHost) Run() {
 
 // New ...
 func (host *HippoHost) New(debug bool, debugFile string,
-	curve elliptic.Curve, localMode bool) {
+	infoFile string, curve elliptic.Curve, localMode bool) {
 	host.InitLogger(debug)
 	host.InitKey(curve)
 	host.localMode = localMode
 	host.debugFile = debugFile
+	host.infoFile = infoFile
 }
 
 // Close ...

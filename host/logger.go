@@ -11,13 +11,14 @@ var (
 	debugLogger *log.Logger
 	debugFile   *os.File
 	infoLogger  *log.Logger
+	infoFile    *os.File
 )
 
-func initLogger(debugPath string) {
+func initLogger(debugPath string, infoPath string) {
 	var err error
 	fmt.Println("debug path:", debugFile)
 
-	if debugPath == "" {
+	if debugPath == "" || debugPath == "STDOUT" {
 		debugLogger = log.New(os.Stdout)
 	} else {
 		debugFile, err = os.Create(debugPath)
@@ -32,7 +33,18 @@ func initLogger(debugPath string) {
 	debugLogger.WithDebug()
 	debugLogger.WithoutColor()
 
-	infoLogger = log.New(os.Stdout)
+	if infoPath == "" || infoPath == "STDOUT" {
+		infoLogger = log.New(os.Stdout)
+		infoLogger.WithColor()
+	} else {
+		infoFile, err = os.Create(infoPath)
+		if err != nil {
+			_ = fmt.Errorf("error: %s", err)
+			return
+		}
+		fmt.Println("create info file:", infoFile)
+		infoLogger = log.New(infoFile)
+		infoLogger.WithoutColor()
+	}
 	infoLogger.WithoutDebug()
-	infoLogger.WithColor()
 }

@@ -55,7 +55,7 @@ func initKeys(number int) {
 }
 
 func initTest(number int) {
-	initLogger("")
+	initLogger("", "")
 	debugLogger.WithDebug()
 	debugLogger.WithoutColor()
 	initKeys(number)

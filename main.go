@@ -68,7 +68,18 @@ func main() {
 	host = new(HippoHost)
 
 	t := time.Now().Format("2006-01-02-15-04-05")
-	host.New(true, fmt.Sprintf(config.DebugFileTemplate, t), config.curve, true)
+
+	var (
+		debugPath = config.DebugFileTemplate
+		infoPath  = config.InfoFileTemplate
+	)
+	if debugPath != "" && debugPath != "STDOUT" {
+		debugPath = fmt.Sprintf(debugPath, t)
+	}
+	if infoPath != "" && infoPath != "STDOUT" {
+		infoPath = fmt.Sprintf(infoPath, t)
+	}
+	host.New(true, debugPath, infoPath, config.curve, true)
 	host.InitLogger(true)
 	debugLogger, infoLogger = host.GetLoggers()
 

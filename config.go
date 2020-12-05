@@ -29,6 +29,7 @@ type HippoConfig struct {
 	RegisterProtocol string `yaml:"register-protocol"`
 
 	DebugFileTemplate string `yaml:"debug-file-template"`
+	InfoFileTemplate  string `yaml:"info-file-template"`
 
 	UIPort string `yaml:"ui-port"`
 }
