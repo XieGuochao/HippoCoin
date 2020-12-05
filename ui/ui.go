@@ -113,7 +113,7 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 				v, err := strconv.Atoi(key[len("sender-amount-"):])
 				if err != nil {
 					infoLogger.Error("transfer-post error:", err)
-					c.Error(err)
+					c.String(http.StatusBadRequest, err.Error())
 					return
 				}
 				if v > numSenders {
@@ -123,7 +123,7 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 				v, err := strconv.Atoi(key[len("receiver-amount-"):])
 				if err != nil {
 					infoLogger.Error("transfer-post error:", err)
-					c.Error(err)
+					c.String(http.StatusBadRequest, err.Error())
 					return
 				}
 				if v > numReceivers {
@@ -150,19 +150,19 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 			var key, value string
 			key = fmt.Sprintf("sender-addr-%d", i)
 			if value = c.Request.PostFormValue(key); value == "" {
-				c.AbortWithStatus(http.StatusBadRequest)
+				c.String(http.StatusBadRequest, "empty sender address.")
 				return
 			}
 			senderAddreesses = append(senderAddreesses, value)
 
 			key = fmt.Sprintf("sender-amount-%d", i)
 			if value = c.Request.PostFormValue(key); value == "" {
-				c.AbortWithStatus(http.StatusBadRequest)
+				c.String(http.StatusBadRequest, "empty sender amount.")
 				return
 			}
 			if amount, err := strconv.Atoi(value); err != nil {
 				infoLogger.Error("transfer-post error:", err)
-				c.Error(err)
+				c.String(http.StatusBadRequest, err.Error())
 				return
 			} else {
 				senderAmounts = append(senderAmounts, uint64(amount))
@@ -170,13 +170,13 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 
 			key = fmt.Sprintf("sender-key-%d", i)
 			if value = c.Request.PostFormValue(key); value == "" {
-				c.AbortWithStatus(http.StatusBadRequest)
+				c.String(http.StatusBadRequest, "empty sender key.")
 				return
 			}
 			senderKey := host.Key{}
 			if err = senderKey.LoadPrivateKeyString(value, h.GetCurve()); err != nil {
 				infoLogger.Error("transfer-post error:", err)
-				c.Error(err)
+				c.String(http.StatusBadRequest, err.Error())
 				return
 			}
 			infoLogger.Info("sender key:", senderKey, senderKey.Key().Curve)
@@ -187,19 +187,19 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 			var key, value string
 			key = fmt.Sprintf("receiver-addr-%d", i)
 			if value = c.Request.PostFormValue(key); value == "" {
-				c.AbortWithStatus(http.StatusBadRequest)
+				c.String(http.StatusBadRequest, "empty receiver address.")
 				return
 			}
 			receiverAddresses = append(receiverAddresses, value)
 
 			key = fmt.Sprintf("receiver-amount-%d", i)
 			if value = c.Request.PostFormValue(key); value == "" {
-				c.AbortWithStatus(http.StatusBadRequest)
+				c.String(http.StatusBadRequest, "empty receiver amount")
 				return
 			}
 			if amount, err := strconv.Atoi(value); err != nil {
 				infoLogger.Error("transfer-post error:", err)
-				c.Error(err)
+				c.String(http.StatusBadRequest, err.Error())
 				return
 			} else {
 				receiverAmounts = append(receiverAmounts, uint64(amount))
@@ -211,25 +211,28 @@ func (u *UI) New(debugLogger, infoLogger *log.Logger, h host.Host) {
 		newTransaction = new(host.HippoTransaction)
 		newTransaction.New(h.GetHashFunction(), h.GetCurve())
 		if ok = newTransaction.SetSender(senderAddreesses, senderAmounts); !ok {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.String(http.StatusBadRequest, "set senders failed.")
 			infoLogger.Error("ui: transfer-post set senders failed.")
 			return
 		}
 		if ok = newTransaction.SetReceiver(receiverAddresses, receiverAmounts); !ok {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.String(http.StatusBadRequest, "set receivers failed.")
 			infoLogger.Error("ui: transfer-post set receivers failed.")
 			return
 		}
+		if ok = newTransaction.UpdateFee(); !ok {
+			c.String(http.StatusBadRequest, "Wrong fee!")
+		}
 		for _, key := range senderKeys {
 			if ok = newTransaction.Sign(key); !ok {
-				c.AbortWithStatus(http.StatusBadRequest)
+				c.String(http.StatusBadRequest, "sign failed.")
 				infoLogger.Error("ui: transfer-post sign failed.")
 				return
 			}
 		}
 
 		if ok = h.AddTransaction(newTransaction); !ok {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.String(http.StatusBadRequest, "host add transaction failed.")
 			infoLogger.Error("ui: transfer-post transaction check failed.")
 			return
 		}

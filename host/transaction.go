@@ -288,7 +288,7 @@ func (t *HippoTransaction) GetBalanceChange() map[string]int64 {
 		}
 	}
 	for i := range t.ReceiverAddresses {
-		v := t.SenderAmounts[i]
+		v := t.ReceiverAmounts[i]
 
 		if _, has := result[t.ReceiverAddresses[i]]; !has {
 			result[t.ReceiverAddresses[i]] = int64(v)
