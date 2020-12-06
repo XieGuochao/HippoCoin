@@ -19,11 +19,13 @@ import (
 // NetworkListener ...
 // Steps:
 // 1. New(ctx, ip, protocol)
+// 1.1 SetConfigPort(port)
 // 2. Listen()   It will generate port.
 // 3. Stop()
 // 4. SetIP(ip) SetPort(port) NetworkAddress()
 type NetworkListener interface {
 	New(ctx context.Context, ip, protocol string)
+	SetConfigPort(int)
 	Listen()
 	Listener() net.Listener
 	SetIP(ip string)
@@ -36,6 +38,7 @@ type NetworkListener interface {
 // HippoNetworkListener ...
 type HippoNetworkListener struct {
 	ip, protocol string
+	configPort   int
 	port         int
 	ctx          context.Context
 	cancel       context.CancelFunc
@@ -48,6 +51,9 @@ func (l *HippoNetworkListener) New(ctx context.Context, ip, protocol string) {
 	l.ip, l.protocol = ip, protocol
 	l.ctx, l.cancel = context.WithCancel(ctx)
 }
+
+// SetConfigPort ...
+func (l *HippoNetworkListener) SetConfigPort(port int) { l.configPort = port }
 
 // SetIP ...
 func (l *HippoNetworkListener) SetIP(ip string) {
@@ -72,7 +78,7 @@ func (l *HippoNetworkListener) Stop() {
 // Listen ...
 func (l *HippoNetworkListener) Listen() {
 	var err error
-	l.listener, err = net.Listen(l.protocol, ":0")
+	l.listener, err = net.Listen(l.protocol, fmt.Sprintf(":%d", l.configPort))
 	if err != nil {
 		infoLogger.Fatal(err, l.protocol)
 	}

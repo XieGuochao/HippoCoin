@@ -42,6 +42,8 @@ type Host interface {
 
 		registerAddress string,
 		registerProtocol string,
+
+		listenerPort int,
 	)
 
 	AllHashesInLevel() map[int][]string
@@ -189,6 +191,8 @@ func (host *HippoHost) InitNetwork(
 
 	registerAddress string,
 	registerProtocol string,
+
+	listenerPort int,
 ) {
 	if host.localMode {
 		host.IP = "localhost"
@@ -204,6 +208,7 @@ func (host *HippoHost) InitNetwork(
 
 	host.networkListener = new(HippoNetworkListener)
 	host.networkListener.New(host.ctx, host.IP, host.protocol)
+	host.networkListener.SetConfigPort(listenerPort)
 	host.networkListener.Listen()
 
 	infoLogger.Info("listener: create")

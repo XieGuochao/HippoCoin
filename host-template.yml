@@ -1,0 +1,22 @@
+curve: $curve
+mining-threads: $miningthreads
+broadcast-queue-len: $broadcastqueuelen
+mining-capacity: $miningcapacity
+mining-interval: $mininginterval
+mining-ttl: $miningttl
+protocol: $protocol
+
+max-neighbors: $maxneighbors
+update-time-base: $updatetimebase
+update-time-rand: $updatetimerand
+
+register-address: $registeraddress
+register-protocol: $registerprotocol
+
+local-mode: $localmode
+
+debug-file-template: $debugfiletemplate
+info-file-template: $infofiletemplate
+
+ui-port: $uiport
+listener-port: $listenerport

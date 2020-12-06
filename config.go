@@ -33,7 +33,8 @@ type HippoConfig struct {
 
 	UIPort string `yaml:"ui-port"`
 
-	LocalMode bool `yaml:"local-mode"`
+	LocalMode    bool `yaml:"local-mode"`
+	ListenerPort int  `yaml:"listener-port"`
 }
 
 // Load ...

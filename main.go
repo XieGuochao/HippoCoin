@@ -94,7 +94,7 @@ func main() {
 		BasicDifficulty, int64(config.MiningInterval), config.MiningCapacity,
 		int64(config.MiningTTL), config.Protocol)
 	host.InitNetwork(new(HippoBlock), new(HippoTransaction), config.MaxNeighbors, config.UpdateTimeBase, config.UpdateTimeRand,
-		config.RegisterAddress, config.RegisterProtocol)
+		config.RegisterAddress, config.RegisterProtocol, config.ListenerPort)
 
 	u.New(debugLogger, infoLogger, host)
 	u.Main(config.UIPort)

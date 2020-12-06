@@ -10,7 +10,7 @@ max-neighbors: 5
 update-time-base: 10
 update-time-rand: 10
 
-register-address: 127.0.0.1:9325
+register-address: 172.17.0.2:9325
 register-protocol: tcp
 
 local-mode: true
@@ -19,3 +19,4 @@ debug-file-template: ./log/host1-debug-%s.log
 info-file-template: STDOUT
 
 ui-port: 8080
+listener-port: 9000
