@@ -47,6 +47,25 @@ func initLogger(debugPath string) {
 }
 
 func main() {
+	fmt.Printf("Hippo Coin v%s\n", version)
+	fmt.Println("By Guochao Xie")
+	fmt.Println(`                                                     
+                         @@@.  .@@                    
+                        @@ .@@@@@@@                   
+              @@@@@@@@@@@@        @@.                 
+           @@@@               @@    @@@@@@@@.@@@      
+         @@@.                 .                @@.    
+        @@                                      @@    
+       @@                                      .@@    
+      @@@                   @                  .@@    
+    ..@@@.                   @                  @@    
+        @..                   @@               @@     
+        .@ ...              . @@@@@ .  .   . @@@      
+         .@@. .    @@@       .@@   @@@@@@@@@@         
+           @@@@@@@@. .@@@@@@@@@                       
+         ........................                
+`)
+	time.Sleep(time.Second)
 	var (
 		host   Host
 		ctx    context.Context
