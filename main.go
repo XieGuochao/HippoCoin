@@ -108,7 +108,7 @@ func main() {
 
 	runtime.GOMAXPROCS(config.MiningThreads + 1)
 	fmt.Println("set max procs:", config.MiningThreads+2)
-	host.InitLocals(ctx, Hash, config.miningFunction, 1,
+	host.InitLocals(ctx, Hash, config.miningFunction, config.MiningThreads,
 		new(P2PClient), uint(config.BroadcastQueueLen), MiningCallbackBroadcastSave,
 		BasicDifficulty, int64(config.MiningInterval), config.MiningCapacity,
 		int64(config.MiningTTL), config.Protocol)
