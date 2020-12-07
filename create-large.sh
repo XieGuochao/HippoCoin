@@ -8,7 +8,7 @@ do
     --env listenerport=$(($i + 11000)) \
     --expose $(($i + 11000)) \
     --env miningthreads=$3 \
-    --cpus=$(($3 + 1)) \
+    --cpus=$(($3 + 2)) \
     -d \
     hippocoin.tencentcloudcr.com/hippo/coin
 done
