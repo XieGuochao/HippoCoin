@@ -41,7 +41,7 @@ You may refer to the [_Build Part_](#build).
 
 ## Run from Docker
 
-1. Register: `sudo docker run -p 9325:9325 -d hippocoin.tencentcloudcr.com/hippo/register`
+1. Register: `sudo docker run -p 9325:9325 -d ccr.ccs.tencentyun.com/hippocoin/register`
 2. Host: `sudo docker run -p 10001:8080 -p 11001:11001 --env registeraddress=172.17.0.2:9325 \
     --env infofiletemplate=./log/host$i-info-%s.log \
     --env debugfiletemplate=./log/host$i-debug-%s.log \
@@ -49,7 +49,7 @@ You may refer to the [_Build Part_](#build).
     --expose 11001 \
     --cpus=2 \
     -d \
-    hippocoin.tencentcloudcr.com/hippo/coin`
+    ccr.ccs.tencentyun.com/hippocoin/coin`
     
     You may need to change `registeraddress` if you have modified it. And your web client UI will be on port `10001`.
 
