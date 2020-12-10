@@ -9,5 +9,5 @@ do
     --expose $(($i + 11000)) \
     --cpus=2 \
     -d \
-    hippocoin.tencentcloudcr.com/hippo/coin
+    ccr.ccs.tencentyun.com/hippocoin/coin
 done

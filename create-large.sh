@@ -10,5 +10,5 @@ do
     --env miningthreads=$3 \
     --cpus=$(($3 + 2)) \
     -d \
-    hippocoin.tencentcloudcr.com/hippo/coin
+    ccr.ccs.tencentyun.com/hippocoin/coin
 done
